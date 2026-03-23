@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#FF6B6B"/>
+  <circle cx="256" cy="220" r="120" fill="#FFF9E6"/>
+  <text x="256" y="200" text-anchor="middle" font-size="120" dominant-baseline="middle">☀️</text>
+  <text x="256" y="420" text-anchor="middle" font-size="64" font-weight="bold" fill="#FFFFFF" font-family="sans-serif">준비!</text>
+</svg>
