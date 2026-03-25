@@ -245,9 +245,9 @@ export default function SettingsPage() {
                   type="number"
                   min="1"
                   max="60"
-                  value={newTaskMinutes}
-                  onChange={(e) => setNewTaskMinutes(Math.max(1, parseInt(e.target.value) || 1))}
-                  onFocus={(e) => e.target.select()}
+                  defaultValue={newTaskMinutes}
+                  key={`new-task-min-${showAddTask}`}
+                  onBlur={(e) => setNewTaskMinutes(Math.max(1, Math.min(60, parseInt(e.target.value) || 1)))}
                   className="w-16 text-center px-1 py-1.5 rounded-lg border-2 text-sm"
                   style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
                 />
@@ -300,12 +300,12 @@ export default function SettingsPage() {
                     type="number"
                     min="1"
                     max="60"
-                    value={Math.floor(task.durationSeconds / 60)}
-                    onChange={(e) => {
+                    key={`${task.id}-${task.durationSeconds}`}
+                    defaultValue={Math.floor(task.durationSeconds / 60)}
+                    onBlur={(e) => {
                       const mins = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
                       updateTaskDuration(task.id, mins * 60, routineTab);
                     }}
-                    onFocus={(e) => e.target.select()}
                     className="w-14 text-center px-1 py-1 rounded border-2 text-sm"
                     style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
                   />
