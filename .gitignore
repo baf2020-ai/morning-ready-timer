@@ -39,6 +39,10 @@ yarn-error.log*
 # bkit
 .bkit/
 
+# capacitor native projects
+/ios/
+/android/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

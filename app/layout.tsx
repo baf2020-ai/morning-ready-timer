@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "준비 히어로",
   },
+  other: {
+    "google-fonts": "Fredoka:wght@400;500;600;700&family=Jua",
+  },
 };
 
 export const viewport: Viewport = {
@@ -18,7 +21,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#FF6B6B",
+  themeColor: "#6C5CE7",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -28,6 +32,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Jua&display=swap" rel="stylesheet" />
+      </head>
       <body className="h-full">
         <ServiceWorkerRegister />
         {children}

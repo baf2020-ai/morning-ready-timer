@@ -1,3 +1,6 @@
+/** 루틴 타입 */
+export type RoutineType = "morning" | "bedtime";
+
 /** SVG 아이콘 타입 */
 export type TaskIconType =
   | "blanket"
@@ -40,6 +43,7 @@ export interface PlayerState {
 /** 게임 세션 */
 export interface GameSession {
   mode: "solo" | "dual";
+  routineType: RoutineType;
   players: PlayerState[];
   tasks: TaskItem[];
   isPaused: boolean;
@@ -59,6 +63,7 @@ export interface PlayerProfile {
 /** 일간 기록 */
 export interface DailyRecord {
   date: string;
+  routineType?: RoutineType;
   totalStars: number;
   totalSeconds: number;
   isAllClear: boolean;
@@ -73,6 +78,7 @@ export interface DailyRecord {
 /** 설정 */
 export interface AppSettings {
   tasks: TaskItem[];
+  bedtimeTasks: TaskItem[];
   profiles: PlayerProfile[];
   targetTime: string | null;
   pinCode: string | null;

@@ -2,19 +2,19 @@
   "name": "준비 히어로 - 등원준비 타이머",
   "short_name": "준비 히어로",
   "description": "아이들의 즐거운 등원 준비 타이머",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#FFF9E6",
-  "theme_color": "#FF6B6B",
+  "background_color": "#FFF8F0",
+  "theme_color": "#6C5CE7",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "./icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { GameSession, PlayerState, TaskItem, PlayerProfile, StarGrade, TaskResult } from "@/lib/types";
+import type { GameSession, PlayerState, TaskItem, PlayerProfile, StarGrade, TaskResult, RoutineType } from "@/lib/types";
 import { STAR_THRESHOLDS } from "@/lib/constants";
 import { soundManager } from "@/lib/sounds";
 
@@ -9,7 +9,7 @@ interface GameStore {
   session: GameSession | null;
   now: number; // Date.now(), updated every second
 
-  startGame: (mode: "solo" | "dual", tasks: TaskItem[], profiles: PlayerProfile[]) => void;
+  startGame: (mode: "solo" | "dual", tasks: TaskItem[], profiles: PlayerProfile[], routineType?: RoutineType) => void;
   completeTask: (playerIndex: number) => void;
   pauseGame: () => void;
   resumeGame: () => void;
@@ -25,7 +25,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   session: null,
   now: Date.now(),
 
-  startGame: (mode, tasks, profiles) => {
+  startGame: (mode, tasks, profiles, routineType = "morning") => {
     const timestamp = Date.now();
     const players: PlayerState[] = profiles.map((p) => ({
       profileId: p.id,
@@ -39,6 +39,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       session: {
         mode,
+        routineType,
         players,
         tasks,
         isPaused: false,
@@ -53,9 +54,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!session) return;
 
     const player = session.players[playerIndex];
-    if (player.isCompleted) return;
+    if (!player || player.isCompleted) return;
 
     const task = session.tasks[player.currentTaskIndex];
+    if (!task) return;
     const elapsed = Math.floor((now - player.taskStartedAt) / 1000);
     const stars = get().getStarGrade(elapsed, task.durationSeconds);
 
@@ -129,16 +131,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { session, now } = get();
     if (!session) return 0;
     const player = session.players[playerIndex];
-    if (player.isCompleted) return 0;
+    if (!player || player.isCompleted) return 0;
     const task = session.tasks[player.currentTaskIndex];
+    if (!task) return 0;
     const elapsed = Math.floor((now - player.taskStartedAt) / 1000);
-    return Math.max(0, task.durationSeconds - elapsed);
+    return task.durationSeconds - elapsed;
   },
 
   getElapsedSeconds: (playerIndex) => {
     const { session, now } = get();
     if (!session) return 0;
     const player = session.players[playerIndex];
+    if (!player) return 0;
     if (player.isCompleted) return 0;
     return Math.floor((now - player.taskStartedAt) / 1000);
   },

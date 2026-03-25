@@ -2,16 +2,17 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { AppSettings, TaskItem, PlayerProfile } from "@/lib/types";
-import { DEFAULT_TASKS, DEFAULT_PROFILES } from "@/lib/constants";
+import type { AppSettings, TaskItem, PlayerProfile, RoutineType } from "@/lib/types";
+import { DEFAULT_TASKS, DEFAULT_BEDTIME_TASKS, DEFAULT_PROFILES } from "@/lib/constants";
 
 interface SettingsStore {
   settings: AppSettings;
-  updateTasks: (tasks: TaskItem[]) => void;
-  addTask: (task: Omit<TaskItem, "order">) => void;
-  removeTask: (taskId: string) => void;
-  reorderTasks: (fromIndex: number, toIndex: number) => void;
-  updateTaskDuration: (taskId: string, durationSeconds: number) => void;
+  updateTasks: (tasks: TaskItem[], routine?: RoutineType) => void;
+  addTask: (task: Omit<TaskItem, "order">, routine?: RoutineType) => void;
+  removeTask: (taskId: string, routine?: RoutineType) => void;
+  reorderTasks: (fromIndex: number, toIndex: number, routine?: RoutineType) => void;
+  updateTaskDuration: (taskId: string, durationSeconds: number, routine?: RoutineType) => void;
+  getTasksForRoutine: (routine: RoutineType) => TaskItem[];
   updateProfile: (profileId: string, updates: Partial<PlayerProfile>) => void;
   setTargetTime: (time: string | null) => void;
   setPinCode: (pin: string | null) => void;
@@ -21,49 +22,72 @@ interface SettingsStore {
 
 const defaultSettings: AppSettings = {
   tasks: DEFAULT_TASKS,
+  bedtimeTasks: DEFAULT_BEDTIME_TASKS,
   profiles: DEFAULT_PROFILES,
   targetTime: null,
   pinCode: null,
 };
+
+function getTaskKey(routine: RoutineType): "tasks" | "bedtimeTasks" {
+  return routine === "bedtime" ? "bedtimeTasks" : "tasks";
+}
+
+function safeGetTasks(settings: AppSettings, routine: RoutineType): TaskItem[] {
+  const key = getTaskKey(routine);
+  return settings[key] ?? (routine === "bedtime" ? DEFAULT_BEDTIME_TASKS : DEFAULT_TASKS);
+}
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set, get) => ({
       settings: defaultSettings,
 
-      updateTasks: (tasks) =>
-        set((state) => ({ settings: { ...state.settings, tasks } })),
+      getTasksForRoutine: (routine) => {
+        const key = getTaskKey(routine);
+        const tasks = get().settings[key];
+        if (!tasks || tasks.length === 0) {
+          return routine === "bedtime" ? DEFAULT_BEDTIME_TASKS : DEFAULT_TASKS;
+        }
+        return tasks;
+      },
 
-      addTask: (task) =>
+      updateTasks: (tasks, routine = "morning") =>
+        set((state) => ({ settings: { ...state.settings, [getTaskKey(routine)]: tasks } })),
+
+      addTask: (task, routine = "morning") =>
         set((state) => {
-          const tasks = [...state.settings.tasks];
+          const key = getTaskKey(routine);
+          const tasks = [...safeGetTasks(state.settings, routine)];
           const newTask: TaskItem = { ...task, order: tasks.length };
-          return { settings: { ...state.settings, tasks: [...tasks, newTask] } };
+          return { settings: { ...state.settings, [key]: [...tasks, newTask] } };
         }),
 
-      removeTask: (taskId) =>
+      removeTask: (taskId, routine = "morning") =>
         set((state) => {
-          const tasks = state.settings.tasks
+          const key = getTaskKey(routine);
+          const tasks = safeGetTasks(state.settings, routine)
             .filter((t) => t.id !== taskId)
             .map((t, i) => ({ ...t, order: i }));
-          return { settings: { ...state.settings, tasks } };
+          return { settings: { ...state.settings, [key]: tasks } };
         }),
 
-      reorderTasks: (fromIndex, toIndex) =>
+      reorderTasks: (fromIndex, toIndex, routine = "morning") =>
         set((state) => {
-          const tasks = [...state.settings.tasks];
+          const key = getTaskKey(routine);
+          const tasks = [...safeGetTasks(state.settings, routine)];
           const [moved] = tasks.splice(fromIndex, 1);
           tasks.splice(toIndex, 0, moved);
           const reordered = tasks.map((t, i) => ({ ...t, order: i }));
-          return { settings: { ...state.settings, tasks: reordered } };
+          return { settings: { ...state.settings, [key]: reordered } };
         }),
 
-      updateTaskDuration: (taskId, durationSeconds) =>
+      updateTaskDuration: (taskId, durationSeconds, routine = "morning") =>
         set((state) => {
-          const tasks = state.settings.tasks.map((t) =>
+          const key = getTaskKey(routine);
+          const tasks = safeGetTasks(state.settings, routine).map((t) =>
             t.id === taskId ? { ...t, durationSeconds } : t
           );
-          return { settings: { ...state.settings, tasks } };
+          return { settings: { ...state.settings, [key]: tasks } };
         }),
 
       updateProfile: (profileId, updates) =>
