@@ -9,7 +9,7 @@ interface GameStore {
   session: GameSession | null;
   now: number; // Date.now(), updated every second
 
-  startGame: (mode: "solo" | "dual", tasks: TaskItem[], profiles: PlayerProfile[], routineType?: RoutineType) => void;
+  startGame: (mode: "solo" | "dual", playerTasks: TaskItem[][], profiles: PlayerProfile[], routineType?: RoutineType) => void;
   completeTask: (playerIndex: number) => void;
   pauseGame: () => void;
   resumeGame: () => void;
@@ -19,13 +19,14 @@ interface GameStore {
   getRemainingSeconds: (playerIndex: number) => number;
   getElapsedSeconds: (playerIndex: number) => number;
   getStarGrade: (elapsed: number, limit: number) => StarGrade;
+  getPlayerTasks: (playerIndex: number) => TaskItem[];
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   session: null,
   now: Date.now(),
 
-  startGame: (mode, tasks, profiles, routineType = "morning") => {
+  startGame: (mode, playerTasks, profiles, routineType = "morning") => {
     const timestamp = Date.now();
     const players: PlayerState[] = profiles.map((p) => ({
       profileId: p.id,
@@ -41,12 +42,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
         mode,
         routineType,
         players,
-        tasks,
+        tasks: playerTasks[0] ?? [],       // legacy fallback
+        playerTasks,
         isPaused: false,
         isMuted: soundManager.muted,
       },
       now: timestamp,
     });
+  },
+
+  getPlayerTasks: (playerIndex) => {
+    const { session } = get();
+    if (!session) return [];
+    return session.playerTasks[playerIndex] ?? session.tasks;
   },
 
   completeTask: (playerIndex) => {
@@ -56,7 +64,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const player = session.players[playerIndex];
     if (!player || player.isCompleted) return;
 
-    const task = session.tasks[player.currentTaskIndex];
+    const tasks = get().getPlayerTasks(playerIndex);
+    const task = tasks[player.currentTaskIndex];
     if (!task) return;
     const elapsed = Math.floor((now - player.taskStartedAt) / 1000);
     const stars = get().getStarGrade(elapsed, task.durationSeconds);
@@ -70,7 +79,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const newResults = [...player.results, result];
     const nextIndex = player.currentTaskIndex + 1;
-    const isCompleted = nextIndex >= session.tasks.length;
+    const isCompleted = nextIndex >= tasks.length;
 
     soundManager.play(isCompleted ? "allClear" : "complete");
 
@@ -99,7 +108,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resumeGame: () => {
     const { session } = get();
     if (!session) return;
-    // Adjust taskStartedAt to account for pause duration
     const now = Date.now();
     const pauseAdjustedPlayers = session.players.map((p) => {
       if (p.isCompleted) return p;
@@ -132,7 +140,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!session) return 0;
     const player = session.players[playerIndex];
     if (!player || player.isCompleted) return 0;
-    const task = session.tasks[player.currentTaskIndex];
+    const tasks = get().getPlayerTasks(playerIndex);
+    const task = tasks[player.currentTaskIndex];
     if (!task) return 0;
     const elapsed = Math.floor((now - player.taskStartedAt) / 1000);
     return task.durationSeconds - elapsed;

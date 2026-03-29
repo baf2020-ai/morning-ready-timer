@@ -12,13 +12,22 @@ interface TaskCardProps {
   remainingSeconds: number;
   onComplete: () => void;
   nextTask?: TaskItem | null;
+  remainingTasks?: TaskItem[];
 }
 
-export default function TaskCard({ task, remainingSeconds, onComplete, nextTask }: TaskCardProps) {
+export default function TaskCard({ task, remainingSeconds, onComplete, nextTask, remainingTasks = [] }: TaskCardProps) {
   const handleComplete = () => {
     soundManager.play("tap");
     onComplete();
   };
+
+  // ETA 계산
+  const remainingTasksDuration = remainingTasks.reduce((sum, t) => sum + t.durationSeconds, 0);
+  const totalRemaining = Math.max(remainingSeconds, 0) + remainingTasksDuration;
+  const etaDate = new Date(Date.now() + totalRemaining * 1000);
+  const etaHH = etaDate.getHours().toString().padStart(2, "0");
+  const etaMM = etaDate.getMinutes().toString().padStart(2, "0");
+  const totalMin = Math.ceil(totalRemaining / 60);
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -36,11 +45,11 @@ export default function TaskCard({ task, remainingSeconds, onComplete, nextTask 
         </h2>
       </motion.div>
 
-      {/* 뽀모도로 타이머 */}
+      {/* 뽀모도로 타이머 - 태블릿용 크게 */}
       <CountdownTimer
         totalSeconds={task.durationSeconds}
         remainingSeconds={remainingSeconds}
-        size={150}
+        size={280}
       />
 
       {/* 완료 버튼 - 젤리 스타일 */}
@@ -56,6 +65,11 @@ export default function TaskCard({ task, remainingSeconds, onComplete, nextTask 
       >
         완료!
       </motion.button>
+
+      {/* 예상 완료 시간 */}
+      <p className="text-lg font-bold mt-1" style={{ color: COLORS.mint }}>
+        예상 완료 {etaHH}:{etaMM} ({totalMin}분 남음)
+      </p>
 
       {/* 다음 항목 미리보기 */}
       {nextTask && (

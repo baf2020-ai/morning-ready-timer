@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { CHARACTERS, COLORS } from "@/lib/constants";
+import { setFirebaseConfig, clearFirebaseConfig, getFirebaseConfigStored } from "@/lib/firebase";
 import Character from "@/components/svg/characters/Character";
 import { SunIcon, MoonIcon } from "@/components/svg/icons/RoutineIcons";
 import type { CharacterType, TaskIconType, RoutineType } from "@/lib/types";
@@ -21,12 +22,13 @@ export default function SettingsPage() {
   const router = useRouter();
   const {
     settings,
-    getTasksForRoutine,
+    getTasksForProfile,
     updateProfile,
-    updateTaskDuration,
-    removeTask,
-    reorderTasks,
-    addTask,
+    addTaskForProfile,
+    removeTaskForProfile,
+    reorderTasksForProfile,
+    updateTaskDurationForProfile,
+    updateTaskForProfile,
     setTargetTime,
     setPinCode,
     resetToDefaults,
@@ -39,8 +41,24 @@ export default function SettingsPage() {
   const [newTaskIcon, setNewTaskIcon] = useState<TaskIconType>("blanket");
   const [newTaskMinutes, setNewTaskMinutes] = useState(5);
   const [routineTab, setRoutineTab] = useState<RoutineType>("morning");
+  const [selectedProfileId, setSelectedProfileId] = useState(settings.profiles[0]?.id ?? "");
+  const [fbApiKey, setFbApiKey] = useState("");
+  const [fbDbUrl, setFbDbUrl] = useState("");
+  const [fbProjectId, setFbProjectId] = useState("");
+  const [fbConfigured, setFbConfigured] = useState(false);
 
-  const currentTasks = getTasksForRoutine(routineTab);
+  useEffect(() => {
+    const config = getFirebaseConfigStored();
+    if (config) {
+      setFbApiKey(config.apiKey ?? "");
+      setFbDbUrl(config.databaseURL ?? "");
+      setFbProjectId(config.projectId ?? "");
+      setFbConfigured(true);
+    }
+  }, []);
+
+  const currentTasks = getTasksForProfile(selectedProfileId, routineTab);
+  const selectedProfile = settings.profiles.find((p) => p.id === selectedProfileId);
 
   const handlePinSubmit = () => {
     if (settings.pinCode && pinInput === settings.pinCode) {
@@ -51,7 +69,7 @@ export default function SettingsPage() {
 
   const handleAddTask = () => {
     if (!newTaskLabel.trim()) return;
-    addTask({
+    addTaskForProfile(selectedProfileId, {
       id: `custom-${Date.now()}`,
       label: newTaskLabel.trim(),
       icon: newTaskIcon,
@@ -173,9 +191,9 @@ export default function SettingsPage() {
               <>
                 <span className="text-xs" style={{ color: COLORS.textSub }}>
                   시작: {(() => {
-                    const tasks = getTasksForRoutine("morning");
+                    const tasks = getTasksForProfile(settings.profiles[0]?.id ?? "", "morning");
                     const totalMin = tasks.reduce((s, t) => s + t.durationSeconds, 0) / 60;
-                    const [h, m] = settings.targetTime.split(":").map(Number);
+                    const [h, m] = (settings.targetTime ?? "0:0").split(":").map(Number);
                     const startMin = h * 60 + m - totalMin - 10;
                     const sh = Math.floor(startMin / 60);
                     const sm = Math.round(startMin % 60);
@@ -190,8 +208,35 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 준비 항목 설정 - 루틴 탭 */}
+        {/* 준비 항목 설정 - 아이별 + 루틴별 */}
         <section className="sticker-card p-4" style={{ transform: "rotate(0deg)", borderRadius: "20px" }}>
+          {/* 아이 선택 탭 */}
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-base" style={{ color: COLORS.primary }}>준비 항목</h2>
+            <div className="flex-1" />
+            {settings.profiles.map((profile) => (
+              <button
+                key={profile.id}
+                onClick={() => { setSelectedProfileId(profile.id); setShowAddTask(false); }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-all border-2"
+                style={{
+                  borderColor: selectedProfileId === profile.id ? COLORS.primary : "#F0EBFF",
+                  backgroundColor: selectedProfileId === profile.id ? "#F0EBFF" : "transparent",
+                  color: selectedProfileId === profile.id ? COLORS.primary : COLORS.textSub,
+                }}
+              >
+                <Character type={profile.characterType} size={16} expression="happy" />
+                {profile.name}
+              </button>
+            ))}
+          </div>
+
+          {selectedProfile && (
+            <p className="text-xs mb-2" style={{ color: COLORS.textSub }}>
+              {selectedProfile.name}의 루틴을 설정하세요
+            </p>
+          )}
+
           {/* 루틴 선택 탭 */}
           <div className="flex items-center justify-between mb-3">
             <div
@@ -278,7 +323,7 @@ export default function SettingsPage() {
               <div key={task.id} className="flex items-center gap-2 p-2 rounded-xl" style={{ backgroundColor: routineTab === "morning" ? "#F8F5FF" : "#F0F0FF" }}>
                 <div className="flex flex-col gap-1">
                   <button
-                    onClick={() => index > 0 && reorderTasks(index, index - 1, routineTab)}
+                    onClick={() => index > 0 && reorderTasksForProfile(selectedProfileId, index, index - 1, routineTab)}
                     disabled={index === 0}
                     className="text-xs disabled:opacity-20"
                     style={{ color: COLORS.primary, opacity: index === 0 ? 0.2 : 0.6 }}
@@ -286,7 +331,7 @@ export default function SettingsPage() {
                     ▲
                   </button>
                   <button
-                    onClick={() => index < currentTasks.length - 1 && reorderTasks(index, index + 1, routineTab)}
+                    onClick={() => index < currentTasks.length - 1 && reorderTasksForProfile(selectedProfileId, index, index + 1, routineTab)}
                     disabled={index === currentTasks.length - 1}
                     className="text-xs disabled:opacity-20"
                     style={{ color: COLORS.primary, opacity: index === currentTasks.length - 1 ? 0.2 : 0.6 }}
@@ -294,7 +339,28 @@ export default function SettingsPage() {
                     ▼
                   </button>
                 </div>
-                <span className="flex-1 text-sm" style={{ color: COLORS.textDark }}>{task.label}</span>
+                <select
+                  value={task.icon}
+                  onChange={(e) => updateTaskForProfile(selectedProfileId, task.id, { icon: e.target.value as TaskIconType }, routineTab)}
+                  className="px-1 py-1 rounded border-2 text-xs"
+                  style={{ borderColor: "#F0EBFF" }}
+                >
+                  {ICON_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <input
+                  key={`${task.id}-label`}
+                  defaultValue={task.label}
+                  onBlur={(e) => {
+                    const label = e.target.value.trim();
+                    if (label && label !== task.label) {
+                      updateTaskForProfile(selectedProfileId, task.id, { label }, routineTab);
+                    }
+                  }}
+                  className="flex-1 px-2 py-1 rounded border-2 text-sm outline-none"
+                  style={{ borderColor: "#F0EBFF", color: COLORS.textDark }}
+                />
                 <div className="flex items-center gap-1">
                   <input
                     type="number"
@@ -304,7 +370,7 @@ export default function SettingsPage() {
                     defaultValue={Math.floor(task.durationSeconds / 60)}
                     onBlur={(e) => {
                       const mins = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                      updateTaskDuration(task.id, mins * 60, routineTab);
+                      updateTaskDurationForProfile(selectedProfileId, task.id, mins * 60, routineTab);
                     }}
                     className="w-14 text-center px-1 py-1 rounded border-2 text-sm"
                     style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
@@ -313,7 +379,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={() => {
-                    if (currentTasks.length > 1) removeTask(task.id, routineTab);
+                    if (currentTasks.length > 1) removeTaskForProfile(selectedProfileId, task.id, routineTab);
                   }}
                   className="text-sm px-2"
                   style={{ color: COLORS.accent }}
@@ -377,6 +443,74 @@ export default function SettingsPage() {
               </button>
             </div>
           )}
+        </section>
+
+        {/* Firebase 데이터 동기화 */}
+        <section className="sticker-card p-4" style={{ transform: "rotate(0deg)", borderRadius: "20px" }}>
+          <h2 className="text-base mb-3" style={{ color: COLORS.primary }}>
+            데이터 동기화 {fbConfigured && <span className="text-xs" style={{ color: COLORS.mint }}>(연결됨)</span>}
+          </h2>
+          <p className="text-xs mb-3" style={{ color: COLORS.textSub }}>
+            Firebase Realtime Database로 설정과 통계를 자동 백업합니다
+          </p>
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={fbApiKey}
+              onChange={(e) => setFbApiKey(e.target.value)}
+              placeholder="API Key"
+              className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
+              style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
+            />
+            <input
+              type="text"
+              value={fbDbUrl}
+              onChange={(e) => setFbDbUrl(e.target.value)}
+              placeholder="Database URL (https://xxx.firebaseio.com)"
+              className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
+              style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
+            />
+            <input
+              type="text"
+              value={fbProjectId}
+              onChange={(e) => setFbProjectId(e.target.value)}
+              placeholder="Project ID"
+              className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
+              style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
+            />
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => {
+                if (fbApiKey.trim() && fbDbUrl.trim() && fbProjectId.trim()) {
+                  setFirebaseConfig({
+                    apiKey: fbApiKey.trim(),
+                    databaseURL: fbDbUrl.trim(),
+                    projectId: fbProjectId.trim(),
+                  });
+                  setFbConfigured(true);
+                }
+              }}
+              disabled={!fbApiKey.trim() || !fbDbUrl.trim() || !fbProjectId.trim()}
+              className="jelly-btn px-4 py-2 text-white text-sm disabled:opacity-50"
+              style={{ backgroundColor: COLORS.mint, "--btn-shadow": "#009B7D" } as React.CSSProperties}
+            >
+              연결
+            </button>
+            {fbConfigured && (
+              <button
+                onClick={() => {
+                  clearFirebaseConfig();
+                  setFbApiKey(""); setFbDbUrl(""); setFbProjectId("");
+                  setFbConfigured(false);
+                }}
+                className="text-xs underline px-2"
+                style={{ color: COLORS.accent }}
+              >
+                연결 해제
+              </button>
+            )}
+          </div>
         </section>
 
         {/* 초기화 */}

@@ -1,4 +1,4 @@
-type SoundId = "complete" | "allClear" | "tick" | "tap";
+type SoundId = "complete" | "allClear" | "tick" | "tap" | "alert" | "intervalAlert";
 
 class SoundManager {
   private audioContext: AudioContext | null = null;
@@ -43,6 +43,17 @@ class SoundManager {
         break;
       case "tap":
         this.playTone(600, 0.05, "sine");
+        break;
+      case "alert":
+        // 80% 경고: 높은 2음 반복 (삐삐)
+        this.playTone(880, 0.15, "triangle");
+        setTimeout(() => this.playTone(880, 0.15, "triangle"), 200);
+        setTimeout(() => this.playTone(1100, 0.2, "triangle"), 400);
+        break;
+      case "intervalAlert":
+        // 10분 간격 알림: 부드러운 벨 소리
+        this.playTone(660, 0.2, "sine");
+        setTimeout(() => this.playTone(880, 0.3, "sine"), 250);
         break;
     }
   }

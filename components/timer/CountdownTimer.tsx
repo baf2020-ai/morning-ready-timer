@@ -8,6 +8,7 @@ interface CountdownTimerProps {
   totalSeconds: number;
   remainingSeconds: number;
   size?: number;
+  enableAlerts?: boolean;
 }
 
 function getTimerColor(remaining: number, total: number): string {
@@ -32,15 +33,44 @@ function piePath(cx: number, cy: number, r: number, startDeg: number, endDeg: nu
   return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
 }
 
-export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 180 }: CountdownTimerProps) {
+export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 180, enableAlerts = true }: CountdownTimerProps) {
   const lastTickRef = useRef(remainingSeconds);
+  const alertFiredRef = useRef(false);
+  const intervalAlertedRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    // Reset alert refs when task changes (totalSeconds changes)
+    alertFiredRef.current = false;
+    intervalAlertedRef.current = new Set();
+  }, [totalSeconds]);
 
   useEffect(() => {
     if (remainingSeconds > 0 && remainingSeconds <= 10 && remainingSeconds !== lastTickRef.current) {
       soundManager.play("tick");
     }
+
+    if (enableAlerts && remainingSeconds > 0 && remainingSeconds !== lastTickRef.current) {
+      const elapsed = totalSeconds - remainingSeconds;
+      const ratio = elapsed / totalSeconds;
+
+      // 80% 경고: 타이머의 80% 시점에 알림
+      if (ratio >= 0.8 && !alertFiredRef.current) {
+        alertFiredRef.current = true;
+        soundManager.play("alert");
+      }
+
+      // 10분 이상 항목: 10분 간격 알림
+      if (totalSeconds >= 600) {
+        const elapsedMinutes = Math.floor(elapsed / 60);
+        if (elapsedMinutes > 0 && elapsedMinutes % 10 === 0 && !intervalAlertedRef.current.has(elapsedMinutes)) {
+          intervalAlertedRef.current.add(elapsedMinutes);
+          soundManager.play("intervalAlert");
+        }
+      }
+    }
+
     lastTickRef.current = remainingSeconds;
-  }, [remainingSeconds]);
+  }, [remainingSeconds, totalSeconds, enableAlerts]);
 
   const isOvertime = remainingSeconds <= 0;
   const color = getTimerColor(remainingSeconds, totalSeconds);
@@ -55,7 +85,7 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
   const mm = Math.floor(abs / 60).toString().padStart(2, "0");
   const ss = (abs % 60).toString().padStart(2, "0");
 
-  const cx = 100, cy = 100, outerR = 82, innerR = 28;
+  const cx = 100, cy = 100, outerR = 82, innerR = 34;
 
   // 눈금 (60개, 5분 간격 큰 눈금)
   const ticks = Array.from({ length: 60 }, (_, i) => i);
@@ -142,13 +172,13 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
         {/* 중앙 원 (노브) */}
         <circle cx={cx} cy={cy} r={innerR} fill="white" stroke="#E8E0F0" strokeWidth="2" />
 
-        {/* 중앙 시간 표시 */}
+        {/* 중앙 시간 표시 - 크게 */}
         <text
           x={cx}
-          y={cy - 2}
+          y={cy - 4}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={isOvertime ? "16" : "20"}
+          fontSize={isOvertime ? "22" : "26"}
           fontWeight="bold"
           fontFamily="Fredoka, sans-serif"
           fill={isOvertime ? COLORS.timerRed : COLORS.textDark}
@@ -157,10 +187,10 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
         </text>
         <text
           x={cx}
-          y={cy + 14}
+          y={cy + 16}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize="8"
+          fontSize="9"
           fontFamily="Jua, sans-serif"
           fill={isOvertime ? COLORS.timerRed : COLORS.textSub}
         >

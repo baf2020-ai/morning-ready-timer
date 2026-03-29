@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DailyRecord } from "@/lib/types";
+import { syncStats } from "@/lib/sync";
 
 interface StatsStore {
   records: DailyRecord[];
@@ -73,6 +74,17 @@ export const useStatsStore = create<StatsStore>()(
 
       getStreak: () => calculateStreak(get().records),
     }),
-    { name: "mrt-stats" }
+    {
+      name: "mrt-stats",
+      onRehydrateStorage: () => {
+        return (_state, error) => {
+          if (!error) {
+            useStatsStore.subscribe((state) => {
+              syncStats(state.records);
+            });
+          }
+        };
+      },
+    }
   )
 );

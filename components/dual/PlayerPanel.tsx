@@ -11,6 +11,12 @@ import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
 import { soundManager } from "@/lib/sounds";
 
+// 플레이어별 버튼 색상
+const PLAYER_COLORS = [
+  { bg: COLORS.primary, shadow: "#5041C0" },      // 보라
+  { bg: COLORS.accent, shadow: "#C0306E" },        // 핑크
+] as const;
+
 interface PlayerPanelProps {
   playerIndex: number;
   compact?: boolean;
@@ -21,6 +27,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const now = useGameStore((s) => s.now);
   const completeTask = useGameStore((s) => s.completeTask);
   const getRemainingSeconds = useGameStore((s) => s.getRemainingSeconds);
+  const getPlayerTasks = useGameStore((s) => s.getPlayerTasks);
   const profiles = useSettingsStore((s) => s.settings.profiles);
   void now;
 
@@ -33,10 +40,13 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
 
   const player = session.players[playerIndex];
   const profile = profiles.find((p) => p.id === player.profileId) ?? profiles[0];
-  const currentTask = session.tasks[player.currentTaskIndex];
+  const tasks = getPlayerTasks(playerIndex);
+  const currentTask = tasks[player.currentTaskIndex];
   if (!currentTask && !player.isCompleted) return null;
-  const nextTask = session.tasks[player.currentTaskIndex + 1] ?? null;
+  const nextTask = tasks[player.currentTaskIndex + 1] ?? null;
   const remaining = getRemainingSeconds(playerIndex);
+
+  const playerColor = PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
 
   if (player.isCompleted) {
     const totalStars = player.results.reduce((sum, r) => sum + r.stars, 0);
@@ -76,18 +86,18 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     );
   }
 
-  const timerSize = compact ? 130 : 170;
+  const timerSize = compact ? 220 : 280;
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-3 py-2 gap-1">
 
       {/* 1. 상단: 이름 + 현재 태스크 */}
-      <div className="flex items-center gap-2 mb-1">
-        <p className={`${compact ? "text-sm" : "text-base"}`} style={{ color: COLORS.primary }}>
+      <div className="flex items-center gap-3 mb-2">
+        <p className={`font-bold ${compact ? "text-2xl" : "text-3xl"}`} style={{ color: playerColor.bg, fontFamily: "Jua, sans-serif" }}>
           {profile.name}
         </p>
-        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F0EBFF", color: COLORS.textSub }}>
-          {player.currentTaskIndex + 1}/{session.tasks.length}
+        <span className="text-sm px-3 py-1 rounded-full font-bold" style={{ backgroundColor: "#F0EBFF", color: COLORS.textSub }}>
+          {player.currentTaskIndex + 1}/{tasks.length}
         </span>
       </div>
 
@@ -113,37 +123,55 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         animate={{ y: 0, opacity: 1 }}
         className="flex items-center gap-2 mt-1"
       >
-        <TaskIcon icon={currentTask.icon} size={compact ? 32 : 40} />
-        <h2 className={compact ? "text-base" : "text-lg"} style={{ color: COLORS.textDark }}>
+        <TaskIcon icon={currentTask.icon} size={compact ? 40 : 52} />
+        <h2 className={compact ? "text-lg" : "text-xl"} style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
           {currentTask.label}
         </h2>
       </motion.div>
 
-      {/* 4. 완료 버튼 */}
+      {/* 4. 완료 버튼 - 플레이어별 색상 */}
       <motion.button
         whileTap={{ scale: 0.88, rotate: -2 }}
         onClick={handleComplete}
-        className="jelly-btn w-full max-w-[240px] py-3 text-lg text-white mt-3"
+        className="jelly-btn w-full max-w-[280px] py-4 text-xl text-white mt-3 font-bold"
         style={{
-          backgroundColor: COLORS.primary,
-          "--btn-shadow": "#5041C0",
-          minHeight: "56px",
+          backgroundColor: playerColor.bg,
+          "--btn-shadow": playerColor.shadow,
+          minHeight: "64px",
         } as React.CSSProperties}
       >
         완료!
       </motion.button>
 
-      {/* 5. 다음 항목 */}
-      {nextTask && (
-        <p className="text-xs mt-2" style={{ color: COLORS.textSub }}>
-          다음: {nextTask.label} ({Math.floor(nextTask.durationSeconds / 60)}분)
-        </p>
-      )}
+      {/* 5. 예상 완료 시간 + 다음 항목 */}
+      {(() => {
+        // 현재 태스크 남은 시간 + 이후 태스크들의 총 시간
+        const remainingTasksDuration = tasks
+          .slice(player.currentTaskIndex + 1)
+          .reduce((sum, t) => sum + t.durationSeconds, 0);
+        const totalRemaining = Math.max(remaining, 0) + remainingTasksDuration;
+        const etaDate = new Date(Date.now() + totalRemaining * 1000);
+        const etaHH = etaDate.getHours().toString().padStart(2, "0");
+        const etaMM = etaDate.getMinutes().toString().padStart(2, "0");
+        const totalMin = Math.ceil(totalRemaining / 60);
+        return (
+          <div className="flex flex-col items-center gap-1 mt-2">
+            <p className="text-base font-bold" style={{ color: COLORS.mint }}>
+              예상 완료 {etaHH}:{etaMM} ({totalMin}분 남음)
+            </p>
+            {nextTask && (
+              <p className="text-sm" style={{ color: COLORS.textSub }}>
+                다음: {nextTask.label} ({Math.floor(nextTask.durationSeconds / 60)}분)
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* 6. 스텝 진행 상태 */}
       <div className="w-full flex flex-col items-center mt-2">
         <ProgressSteps
-          tasks={session.tasks}
+          tasks={tasks}
           currentStep={player.currentTaskIndex}
           compact={compact}
         />

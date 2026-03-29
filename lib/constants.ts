@@ -51,8 +51,8 @@ export const CHARACTERS: { type: CharacterType; label: string }[] = [
 ];
 
 export const DEFAULT_PROFILES: PlayerProfile[] = [
-  { id: "player1", name: "플레이어 1", characterType: "bunny" },
-  { id: "player2", name: "플레이어 2", characterType: "bear" },
+  { id: "player1", name: "플레이어 1", characterType: "bunny", tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
+  { id: "player2", name: "플레이어 2", characterType: "bear", tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
 ];
 
 // 새 팔레트: "놀이터" 테마

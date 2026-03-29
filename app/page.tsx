@@ -13,7 +13,7 @@ import type { PlayerProfile, RoutineType } from "@/lib/types";
 
 export default function HomePage() {
   const router = useRouter();
-  const { settings, getTasksForRoutine } = useSettingsStore();
+  const { settings, getTasksForProfile } = useSettingsStore();
   const startGame = useGameStore((s) => s.startGame);
   const profiles = settings.profiles;
   const [routine, setRoutine] = useState<RoutineType>("morning");
@@ -23,16 +23,16 @@ export default function HomePage() {
   const handleSoloStart = async (profile: PlayerProfile) => {
     await soundManager.init();
     soundManager.play("tap");
-    const tasks = getTasksForRoutine(routine);
-    startGame("solo", tasks, [profile], routine);
+    const tasks = getTasksForProfile(profile.id, routine);
+    startGame("solo", [tasks], [profile], routine);
     router.push(`/play?mode=solo&routine=${routine}`);
   };
 
   const handleDualStart = async () => {
     await soundManager.init();
     soundManager.play("tap");
-    const tasks = getTasksForRoutine(routine);
-    startGame("dual", tasks, profiles, routine);
+    const playerTasks = profiles.map((p) => getTasksForProfile(p.id, routine));
+    startGame("dual", playerTasks, profiles, routine);
     router.push(`/play?mode=dual&routine=${routine}`);
   };
 

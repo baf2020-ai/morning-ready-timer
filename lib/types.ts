@@ -45,7 +45,8 @@ export interface GameSession {
   mode: "solo" | "dual";
   routineType: RoutineType;
   players: PlayerState[];
-  tasks: TaskItem[];
+  tasks: TaskItem[];           // legacy fallback
+  playerTasks: TaskItem[][];   // 아이별 태스크 목록
   isPaused: boolean;
   isMuted: boolean;
 }
@@ -53,11 +54,13 @@ export interface GameSession {
 /** 캐릭터 타입 */
 export type CharacterType = "bunny" | "bear" | "cat" | "penguin";
 
-/** 아이 프로필 */
+/** 아이 프로필 (아이별 루틴 항목 포함) */
 export interface PlayerProfile {
   id: string;
   name: string;
   characterType: CharacterType;
+  tasks: TaskItem[];
+  bedtimeTasks: TaskItem[];
 }
 
 /** 일간 기록 */
@@ -77,8 +80,8 @@ export interface DailyRecord {
 
 /** 설정 */
 export interface AppSettings {
-  tasks: TaskItem[];
-  bedtimeTasks: TaskItem[];
+  tasks: TaskItem[];           // legacy (마이그레이션용)
+  bedtimeTasks: TaskItem[];    // legacy (마이그레이션용)
   profiles: PlayerProfile[];
   targetTime: string | null;
   pinCode: string | null;
