@@ -343,21 +343,6 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
 
       {/* 5. 진행 상황 (변경 없음) */}
       <div className="flex flex-col gap-2 px-2">
-        {/* 전체 진행률 바 */}
-        <p className="text-xs font-bold" style={{ color: COLORS.textSub }}>전체 진행률</p>
-        <div
-          className="w-full h-2.5 rounded-full overflow-hidden"
-          style={{ backgroundColor: "#E8E0F0" }}
-        >
-          <motion.div
-            className="h-full rounded-full"
-            style={{ backgroundColor: COLORS.primary }}
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercent}%` }}
-            transition={{ type: "spring", stiffness: 100, damping: 15 }}
-          />
-        </div>
-
         {/* 스텝 아이콘 (기존 ProgressSteps 유지) */}
         <ProgressSteps
           tasks={tasks}
