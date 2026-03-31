@@ -4,7 +4,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AppSettings, TaskItem, PlayerProfile, RoutineType } from "@/lib/types";
 import { DEFAULT_TASKS, DEFAULT_BEDTIME_TASKS, DEFAULT_PROFILES } from "@/lib/constants";
-import { syncSettings } from "@/lib/sync";
+import { syncSettings, startSync } from "@/lib/sync";
+import { getFamilyCode } from "@/lib/firebase";
 
 interface SettingsStore {
   settings: AppSettings;
@@ -172,10 +173,26 @@ export const useSettingsStore = create<SettingsStore>()(
             if (migrated !== state.settings) {
               useSettingsStore.setState({ settings: migrated });
             }
-            // Subscribe to changes and sync to remote
+            // 로컬 변경 → Firebase 푸시
             useSettingsStore.subscribe((s) => {
               syncSettings(s.settings);
             });
+            // 가족 코드가 있으면 양방향 동기화 시작
+            if (getFamilyCode()) {
+              startSync(
+                (remoteSettings) => {
+                  const safe = migrateSettings(remoteSettings);
+                  useSettingsStore.setState({ settings: safe });
+                },
+                (remoteRecords) => {
+                  // useStatsStore는 별도 import 불가 (순환 참조 방지)
+                  // 동적 import로 처리
+                  import("@/stores/useStatsStore").then(({ useStatsStore }) => {
+                    useStatsStore.setState({ records: remoteRecords });
+                  });
+                },
+              );
+            }
           }
         };
       },

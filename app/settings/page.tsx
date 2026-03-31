@@ -4,7 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { CHARACTERS, COLORS } from "@/lib/constants";
-import { setFirebaseConfig, clearFirebaseConfig, getFirebaseConfigStored } from "@/lib/firebase";
+import {
+  setFirebaseConfig, clearFirebaseConfig, getFirebaseConfigStored,
+  getFamilyCode, setFamilyCode, clearFamilyCode, generateFamilyCode,
+  checkFamilyCodeExists, saveFamilyMeta, loadFromFamilyCode,
+} from "@/lib/firebase";
+import { syncSettings, startSync } from "@/lib/sync";
 import Character from "@/components/svg/characters/Character";
 import { SunIcon, MoonIcon } from "@/components/svg/icons/RoutineIcons";
 import type { CharacterType, TaskIconType, RoutineType } from "@/lib/types";
@@ -19,6 +24,7 @@ const ICON_OPTIONS: { value: TaskIconType; label: string }[] = [
 ];
 
 export default function SettingsPage() {
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const {
     settings,
@@ -46,8 +52,14 @@ export default function SettingsPage() {
   const [fbDbUrl, setFbDbUrl] = useState("");
   const [fbProjectId, setFbProjectId] = useState("");
   const [fbConfigured, setFbConfigured] = useState(false);
+  const [familyCode, setFamilyCodeState] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [joinError, setJoinError] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const config = getFirebaseConfigStored();
     if (config) {
       setFbApiKey(config.apiKey ?? "");
@@ -55,10 +67,15 @@ export default function SettingsPage() {
       setFbProjectId(config.projectId ?? "");
       setFbConfigured(true);
     }
+    setFamilyCodeState(getFamilyCode());
   }, []);
 
   const currentTasks = getTasksForProfile(selectedProfileId, routineTab);
   const selectedProfile = settings.profiles.find((p) => p.id === selectedProfileId);
+
+  if (!mounted) {
+    return <div className="min-h-screen" style={{ backgroundColor: COLORS.bgLight }} />;
+  }
 
   const handlePinSubmit = () => {
     if (settings.pinCode && pinInput === settings.pinCode) {
@@ -445,72 +462,210 @@ export default function SettingsPage() {
           )}
         </section>
 
-        {/* Firebase 데이터 동기화 */}
+        {/* 데이터 동기화 */}
         <section className="sticker-card p-4" style={{ transform: "rotate(0deg)", borderRadius: "20px" }}>
           <h2 className="text-base mb-3" style={{ color: COLORS.primary }}>
-            데이터 동기화 {fbConfigured && <span className="text-xs" style={{ color: COLORS.mint }}>(연결됨)</span>}
+            데이터 동기화
           </h2>
-          <p className="text-xs mb-3" style={{ color: COLORS.textSub }}>
-            Firebase Realtime Database로 설정과 통계를 자동 백업합니다
-          </p>
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={fbApiKey}
-              onChange={(e) => setFbApiKey(e.target.value)}
-              placeholder="API Key"
-              className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
-              style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
-            />
-            <input
-              type="text"
-              value={fbDbUrl}
-              onChange={(e) => setFbDbUrl(e.target.value)}
-              placeholder="Database URL (https://xxx.firebaseio.com)"
-              className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
-              style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
-            />
-            <input
-              type="text"
-              value={fbProjectId}
-              onChange={(e) => setFbProjectId(e.target.value)}
-              placeholder="Project ID"
-              className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
-              style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
-            />
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => {
-                if (fbApiKey.trim() && fbDbUrl.trim() && fbProjectId.trim()) {
-                  setFirebaseConfig({
-                    apiKey: fbApiKey.trim(),
-                    databaseURL: fbDbUrl.trim(),
-                    projectId: fbProjectId.trim(),
-                  });
-                  setFbConfigured(true);
-                }
-              }}
-              disabled={!fbApiKey.trim() || !fbDbUrl.trim() || !fbProjectId.trim()}
-              className="jelly-btn px-4 py-2 text-white text-sm disabled:opacity-50"
-              style={{ backgroundColor: COLORS.mint, "--btn-shadow": "#009B7D" } as React.CSSProperties}
-            >
-              연결
-            </button>
-            {fbConfigured && (
+
+          {/* 가족 코드 연결됨 */}
+          {fbConfigured && familyCode && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#F0EBFF" }}>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.mint }} />
+                <span className="text-xs" style={{ color: COLORS.textSub }}>연결됨</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-3 rounded-xl border-2" style={{ borderColor: COLORS.primary }}>
+                <span className="text-base font-bold flex-1" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+                  {familyCode}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(familyCode);
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-full font-bold text-white"
+                  style={{ backgroundColor: COLORS.primary }}
+                >
+                  복사
+                </button>
+              </div>
+              <p className="text-xs" style={{ color: COLORS.textSub }}>
+                다른 기기에서 위 코드를 입력하면 같은 데이터를 공유합니다
+              </p>
               <button
                 onClick={() => {
-                  clearFirebaseConfig();
-                  setFbApiKey(""); setFbDbUrl(""); setFbProjectId("");
-                  setFbConfigured(false);
+                  clearFamilyCode();
+                  setFamilyCodeState(null);
                 }}
-                className="text-xs underline px-2"
+                className="text-xs underline"
                 style={{ color: COLORS.accent }}
               >
                 연결 해제
               </button>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Firebase 설정 완료 + 코드 없음 */}
+          {fbConfigured && !familyCode && (
+            <div className="space-y-3">
+              <p className="text-xs" style={{ color: COLORS.textSub }}>
+                가족 코드로 여러 기기에서 데이터를 공유하세요
+              </p>
+              <button
+                onClick={async () => {
+                  const code = generateFamilyCode();
+                  setFamilyCode(code);
+                  setFamilyCodeState(code);
+                  await saveFamilyMeta(code);
+                  await syncSettings(settings);
+                  startSync(
+                    (remote) => useSettingsStore.setState({ settings: remote }),
+                    (records) => {
+                      import("@/stores/useStatsStore").then(({ useStatsStore }) => {
+                        useStatsStore.setState({ records });
+                      });
+                    },
+                  );
+                }}
+                className="jelly-btn w-full py-3 text-white text-sm font-bold"
+                style={{ backgroundColor: COLORS.primary, "--btn-shadow": "#5041C0" } as React.CSSProperties}
+              >
+                새 가족 코드 만들기
+              </button>
+              <button
+                onClick={() => { setShowJoinInput(true); setJoinError(""); setJoinCode(""); }}
+                className="jelly-btn w-full py-3 text-sm font-bold"
+                style={{ backgroundColor: "#F0EBFF", color: COLORS.primary, "--btn-shadow": "#D8D0F0" } as React.CSSProperties}
+              >
+                기존 코드로 합류하기
+              </button>
+
+              {showJoinInput && (
+                <div className="space-y-2 mt-2">
+                  <input
+                    type="text"
+                    value={joinCode}
+                    onChange={(e) => { setJoinCode(e.target.value); setJoinError(""); }}
+                    placeholder="가족 코드 입력 (예: 행복한-곰돌이-1234)"
+                    className="w-full px-3 py-2 rounded-lg border-2 text-sm outline-none"
+                    style={{ borderColor: joinError ? COLORS.accent : "#F0EBFF", fontFamily: "Jua" }}
+                  />
+                  {joinError && (
+                    <p className="text-xs" style={{ color: COLORS.accent }}>{joinError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        if (!joinCode.trim()) return;
+                        setJoinLoading(true);
+                        setJoinError("");
+                        try {
+                          const exists = await checkFamilyCodeExists(joinCode.trim());
+                          if (!exists) {
+                            setJoinError("코드를 찾을 수 없습니다");
+                            setJoinLoading(false);
+                            return;
+                          }
+                          // 원격 데이터 로드 → 로컬에 덮어쓰기
+                          setFamilyCode(joinCode.trim());
+                          setFamilyCodeState(joinCode.trim());
+                          const remoteSettings = await loadFromFamilyCode(joinCode.trim(), "settings");
+                          if (remoteSettings) {
+                            const envelope = remoteSettings as { data?: unknown };
+                            if (envelope.data) {
+                              useSettingsStore.setState({ settings: envelope.data as typeof settings });
+                            }
+                          }
+                          const remoteStats = await loadFromFamilyCode(joinCode.trim(), "stats");
+                          if (remoteStats) {
+                            const envelope = remoteStats as { data?: unknown };
+                            if (envelope.data) {
+                              const { useStatsStore } = await import("@/stores/useStatsStore");
+                              useStatsStore.setState({ records: envelope.data as [] });
+                            }
+                          }
+                          startSync(
+                            (remote) => useSettingsStore.setState({ settings: remote }),
+                            (records) => {
+                              import("@/stores/useStatsStore").then(({ useStatsStore: s }) => {
+                                s.setState({ records });
+                              });
+                            },
+                          );
+                          setShowJoinInput(false);
+                        } catch {
+                          setJoinError("연결 중 오류가 발생했습니다");
+                        }
+                        setJoinLoading(false);
+                      }}
+                      disabled={!joinCode.trim() || joinLoading}
+                      className="jelly-btn px-4 py-2 text-white text-sm disabled:opacity-50"
+                      style={{ backgroundColor: COLORS.mint, "--btn-shadow": "#009B7D" } as React.CSSProperties}
+                    >
+                      {joinLoading ? "확인 중..." : "합류"}
+                    </button>
+                    <button
+                      onClick={() => setShowJoinInput(false)}
+                      className="text-xs px-3"
+                      style={{ color: COLORS.textSub }}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Firebase 미설정 */}
+          {!fbConfigured && (
+            <div className="space-y-2">
+              <p className="text-xs mb-2" style={{ color: COLORS.textSub }}>
+                Firebase Realtime Database 설정이 필요합니다
+              </p>
+              <input
+                type="text"
+                value={fbApiKey}
+                onChange={(e) => setFbApiKey(e.target.value)}
+                placeholder="API Key"
+                className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
+                style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
+              />
+              <input
+                type="text"
+                value={fbDbUrl}
+                onChange={(e) => setFbDbUrl(e.target.value)}
+                placeholder="Database URL (https://xxx.firebaseio.com)"
+                className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
+                style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
+              />
+              <input
+                type="text"
+                value={fbProjectId}
+                onChange={(e) => setFbProjectId(e.target.value)}
+                placeholder="Project ID"
+                className="w-full px-3 py-2 rounded-lg border-2 text-xs outline-none"
+                style={{ borderColor: "#F0EBFF", fontFamily: "Fredoka" }}
+              />
+              <button
+                onClick={() => {
+                  if (fbApiKey.trim() && fbDbUrl.trim() && fbProjectId.trim()) {
+                    setFirebaseConfig({
+                      apiKey: fbApiKey.trim(),
+                      databaseURL: fbDbUrl.trim(),
+                      projectId: fbProjectId.trim(),
+                    });
+                    setFbConfigured(true);
+                  }
+                }}
+                disabled={!fbApiKey.trim() || !fbDbUrl.trim() || !fbProjectId.trim()}
+                className="jelly-btn px-4 py-2 text-white text-sm disabled:opacity-50 mt-1"
+                style={{ backgroundColor: COLORS.mint, "--btn-shadow": "#009B7D" } as React.CSSProperties}
+              >
+                Firebase 설정 저장
+              </button>
+            </div>
+          )}
         </section>
 
         {/* 초기화 */}
