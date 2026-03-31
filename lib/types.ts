@@ -39,8 +39,11 @@ export interface PlayerState {
   startedAt: string;
   taskStartedAt: number;          // Date.now() for timer calculation
   isTimerRunning: boolean;        // false = 대기/일시정지, true = 카운트다운 중
+  activeRunningTaskIndex?: number; // 실제 타이머가 돌고 있는 태스크 인덱스
   viewingTaskIndex?: number;      // 스텝 클릭 미리보기 (undefined = currentTaskIndex)
   adjustedDuration?: number;      // +/-1분 세션 한정 조정 (undefined = 원래 시간)
+  durationOverrides?: Record<string, number>;  // 태스크별 시간 변경 (taskId → seconds)
+  elapsedOverrides?: Record<string, number>;   // 태스크별 경과 시간 보존 (taskId → elapsed ms)
 }
 
 /** 게임 세션 */

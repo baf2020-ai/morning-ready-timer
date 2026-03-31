@@ -137,105 +137,153 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     );
   }
 
-  const timerSize = compact ? 220 : 280;
+  const timerSize = compact ? 240 : 300;
+
+  // 표시 중인 태스크가 실제 실행 중인지 판별
+  const isDisplayedTaskRunning = player.isTimerRunning && player.activeRunningTaskIndex === player.currentTaskIndex;
+  // 다른 태스크의 타이머가 백그라운드에서 실행 중인지
+  const hasBackgroundTimer = player.isTimerRunning && player.activeRunningTaskIndex !== undefined && player.activeRunningTaskIndex !== player.currentTaskIndex;
+
+  // ETA 계산
+  const nextTask = tasks[player.currentTaskIndex + 1] ?? null;
+  const remainingTasksDuration = tasks
+    .slice(player.currentTaskIndex + 1)
+    .reduce((sum, t) => sum + t.durationSeconds, 0);
+  const totalRemaining = Math.max(remaining, 0) + remainingTasksDuration;
+  const etaDate = new Date(Date.now() + totalRemaining * 1000);
+  const etaHH = etaDate.getHours().toString().padStart(2, "0");
+  const etaMM = etaDate.getMinutes().toString().padStart(2, "0");
+  const totalMin = Math.ceil(totalRemaining / 60);
+
+  // 전체 진행률
+  const progressPercent = Math.round((player.results.length / tasks.length) * 100);
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-full px-3 py-2 gap-1">
+    <div className="relative flex flex-col h-full overflow-y-auto px-4 py-2 gap-2">
 
-      {/* 1. 상단: 이름 + 현재 태스크 */}
-      <div className="flex items-center gap-3 mb-2">
-        <p className={`font-bold ${compact ? "text-2xl" : "text-3xl"}`} style={{ color: playerColor.bg, fontFamily: "Jua, sans-serif" }}>
-          {profile.name}
-        </p>
-        <span className="text-sm px-3 py-1 rounded-full font-bold" style={{ backgroundColor: "#F0EBFF", color: COLORS.textSub }}>
-          {player.currentTaskIndex + 1}/{tasks.length}
+      {/* 1. 헤더: 아바타 + 이름 + 스텝 카운터 */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+        style={{ backgroundColor: "#F5F0FF" }}
+      >
+        {/* 아바타 */}
+        <div
+          className="flex items-center justify-center rounded-full shrink-0 overflow-hidden"
+          style={{
+            width: 44, height: 44,
+            backgroundColor: playerColor.bg,
+          }}
+        >
+          <Character type={profile.characterType} expression="happy" size={36} />
+        </div>
+        {/* 이름 + 서브 */}
+        <div className="flex flex-col min-w-0">
+          <p className="text-lg font-bold truncate" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+            {profile.name}
+          </p>
+          <p className="text-xs" style={{ color: COLORS.textSub }}>
+            오늘의 루틴
+          </p>
+        </div>
+        {/* 스텝 카운터 */}
+        <span
+          className="ml-auto text-sm px-3 py-1 rounded-full font-bold shrink-0"
+          style={{ backgroundColor: "white", color: COLORS.primary, border: `1.5px solid ${COLORS.primary}` }}
+        >
+          {player.currentTaskIndex + 1} / {tasks.length}
         </span>
       </div>
 
-      {/* 2. 타이머 */}
+      {/* 2. 타이머 카드 */}
       <motion.div
         key={currentTask.id}
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="flex flex-col items-center"
+        className="flex flex-col items-center gap-1 px-4 py-3 rounded-3xl"
+        style={{
+          backgroundColor: "white",
+          boxShadow: "0 2px 16px rgba(108, 92, 231, 0.08)",
+        }}
       >
+        {/* 태스크 이름 (타이머 위) */}
+        <div className="flex items-center gap-2">
+          <span
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: playerColor.bg }}
+          />
+          <span className="text-base font-bold" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+            {currentTask.label}
+          </span>
+        </div>
+
+        {/* 타이머 (변경 없음) */}
         <CountdownTimer
           totalSeconds={duration}
           remainingSeconds={remaining}
           size={timerSize}
-          isPaused={!player.isTimerRunning}
+          isPaused={!isDisplayedTaskRunning}
           onTimeClick={handleTimeClick}
         />
-      </motion.div>
 
-      {/* 3. 제어 버튼: [-1분] [시작/정지] [+1분] */}
-      <div className="flex items-center gap-3 mt-1">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => handleAdjustTime(-60)}
-          className="flex items-center justify-center rounded-full font-bold text-sm"
-          style={{
-            width: 40, height: 40,
-            backgroundColor: "#F0EBFF",
-            color: COLORS.primary,
-          }}
-        >
-          -1
-        </motion.button>
-
-        {player.isTimerRunning ? (
+        {/* 제어 버튼: [-1] [시작/정지] [+1] */}
+        <div className="flex items-center gap-3">
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={handlePauseTimer}
-            className="flex items-center justify-center rounded-full px-5 py-2 font-bold text-white text-base"
-            style={{ backgroundColor: COLORS.primary, minWidth: 100 }}
+            onClick={() => handleAdjustTime(-60)}
+            className="flex items-center justify-center rounded-full font-bold text-sm"
+            style={{
+              width: 44, height: 44,
+              backgroundColor: "#F0EBFF",
+              color: COLORS.primary,
+            }}
           >
-            ⏸ 정지
+            -1
           </motion.button>
-        ) : (
+
+          {isDisplayedTaskRunning ? (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handlePauseTimer}
+              className="flex items-center justify-center rounded-full px-6 py-2.5 font-bold text-white text-base"
+              style={{ backgroundColor: COLORS.primary, minWidth: 110 }}
+            >
+              ⏸ 정지
+            </motion.button>
+          ) : (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleStartTimer}
+              className="flex items-center justify-center rounded-full px-6 py-2.5 font-bold text-white text-base"
+              style={{
+                backgroundColor: hasBackgroundTimer ? COLORS.secondary : COLORS.primary,
+                minWidth: 110,
+              }}
+            >
+              ▶ 시작
+            </motion.button>
+          )}
+
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={handleStartTimer}
-            className="flex items-center justify-center rounded-full px-5 py-2 font-bold text-white text-base"
-            style={{ backgroundColor: COLORS.mint, minWidth: 100 }}
+            onClick={() => handleAdjustTime(60)}
+            className="flex items-center justify-center rounded-full font-bold text-sm"
+            style={{
+              width: 44, height: 44,
+              backgroundColor: "#F0EBFF",
+              color: COLORS.primary,
+            }}
           >
-            ▶ 시작
+            +1
           </motion.button>
-        )}
-
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => handleAdjustTime(60)}
-          className="flex items-center justify-center rounded-full font-bold text-sm"
-          style={{
-            width: 40, height: 40,
-            backgroundColor: "#F0EBFF",
-            color: COLORS.primary,
-          }}
-        >
-          +1
-        </motion.button>
-      </div>
-
-      {/* 4. 태스크 아이콘 + 이름 */}
-      <motion.div
-        key={`task-${currentTask.id}`}
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="flex items-center gap-2 mt-1"
-      >
-        <TaskIcon icon={currentTask.icon} size={compact ? 40 : 52} />
-        <h2 className={compact ? "text-lg" : "text-xl"} style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
-          {currentTask.label}
-        </h2>
+        </div>
       </motion.div>
 
-      {/* 5. 완료 버튼 */}
+      {/* 3. 완료 버튼 */}
       <motion.button
-        whileTap={{ scale: 0.88, rotate: -2 }}
+        whileTap={{ scale: 0.95, rotate: -1 }}
         onClick={handleComplete}
-        className="jelly-btn w-full max-w-[280px] py-4 text-xl text-white mt-3 font-bold"
+        className="jelly-btn w-full max-w-[280px] py-3 text-xl text-white font-bold mx-auto my-2"
         style={{
           backgroundColor: playerColor.bg,
           "--btn-shadow": playerColor.shadow,
@@ -245,33 +293,72 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         완료!
       </motion.button>
 
-      {/* 6. 예상 완료 시간 + 다음 항목 */}
-      {(() => {
-        const nextTask = tasks[player.currentTaskIndex + 1] ?? null;
-        const remainingTasksDuration = tasks
-          .slice(player.currentTaskIndex + 1)
-          .reduce((sum, t) => sum + t.durationSeconds, 0);
-        const totalRemaining = Math.max(remaining, 0) + remainingTasksDuration;
-        const etaDate = new Date(Date.now() + totalRemaining * 1000);
-        const etaHH = etaDate.getHours().toString().padStart(2, "0");
-        const etaMM = etaDate.getMinutes().toString().padStart(2, "0");
-        const totalMin = Math.ceil(totalRemaining / 60);
-        return (
-          <div className="flex flex-col items-center gap-1 mt-2">
-            <p className="text-base font-bold" style={{ color: COLORS.mint }}>
-              예상 완료 {etaHH}:{etaMM} ({totalMin}분 남음)
-            </p>
-            {nextTask && (
-              <p className="text-sm" style={{ color: COLORS.textSub }}>
-                다음: {nextTask.label} ({Math.floor(nextTask.durationSeconds / 60)}분)
-              </p>
-            )}
+      {/* 4. 정보 카드: 예상 완료 + 다음 할 일 */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+        style={{ backgroundColor: "#F5F0FF" }}
+      >
+        {/* 예상 완료 */}
+        <div className="flex items-center gap-2">
+          <span
+            className="text-xs px-2 py-0.5 rounded font-bold text-white"
+            style={{ backgroundColor: COLORS.mint }}
+          >
+            완료
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs" style={{ color: COLORS.textSub }}>예상 완료</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-bold" style={{ color: COLORS.textDark, fontFamily: "Fredoka, sans-serif" }}>
+                {etaHH}:{etaMM}
+              </span>
+              <span
+                className="text-xs px-1.5 py-0.5 rounded font-bold"
+                style={{ backgroundColor: "#E8E0F0", color: COLORS.textSub }}
+              >
+                {totalMin}분
+              </span>
+            </div>
           </div>
-        );
-      })()}
+        </div>
 
-      {/* 7. 스텝 진행 상태 (클릭으로 이동) */}
-      <div className="w-full flex flex-col items-center mt-2">
+        {/* 구분선 + 다음 */}
+        {nextTask && (
+          <>
+            <span
+              className="text-xs px-2 py-0.5 rounded font-bold text-white shrink-0"
+              style={{ backgroundColor: COLORS.primary }}
+            >
+              다음
+            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs" style={{ color: COLORS.textSub }}>다음 할 일</span>
+              <span className="text-sm font-bold truncate" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+                {nextTask.label} ({Math.floor(nextTask.durationSeconds / 60)}분)
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* 5. 진행 상황 (변경 없음) */}
+      <div className="flex flex-col gap-2 px-2">
+        {/* 전체 진행률 바 */}
+        <p className="text-xs font-bold" style={{ color: COLORS.textSub }}>전체 진행률</p>
+        <div
+          className="w-full h-2.5 rounded-full overflow-hidden"
+          style={{ backgroundColor: "#E8E0F0" }}
+        >
+          <motion.div
+            className="h-full rounded-full"
+            style={{ backgroundColor: COLORS.primary }}
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+          />
+        </div>
+
+        {/* 스텝 아이콘 (기존 ProgressSteps 유지) */}
         <ProgressSteps
           tasks={tasks}
           currentStep={player.currentTaskIndex}

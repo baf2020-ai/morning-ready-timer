@@ -149,7 +149,7 @@ export default function PlayContent() {
         {mode === "dual" ? (
           <DualLayout />
         ) : (
-          <div className="flex items-center justify-center h-full">
+          <div className="h-full">
             <PlayerPanel playerIndex={0} />
           </div>
         )}
