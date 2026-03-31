@@ -9,14 +9,14 @@ class SoundManager {
     this.audioContext = new AudioContext();
   }
 
-  private playTone(frequency: number, duration: number, type: OscillatorType = "sine") {
+  private playTone(frequency: number, duration: number, type: OscillatorType = "sine", volume = 0.3) {
     if (this.isMuted || !this.audioContext) return;
     const ctx = this.audioContext;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -45,15 +45,15 @@ class SoundManager {
         this.playTone(600, 0.05, "sine");
         break;
       case "alert":
-        // 80% 경고: 높은 2음 반복 (삐삐)
-        this.playTone(880, 0.15, "triangle");
-        setTimeout(() => this.playTone(880, 0.15, "triangle"), 200);
-        setTimeout(() => this.playTone(1100, 0.2, "triangle"), 400);
+        // 80% 경고 / 시간 초과: 높은 2음 반복 (삐삐)
+        this.playTone(880, 0.2, "triangle", 0.7);
+        setTimeout(() => this.playTone(880, 0.2, "triangle", 0.7), 250);
+        setTimeout(() => this.playTone(1100, 0.3, "triangle", 0.8), 500);
         break;
       case "intervalAlert":
         // 10분 간격 알림: 부드러운 벨 소리
-        this.playTone(660, 0.2, "sine");
-        setTimeout(() => this.playTone(880, 0.3, "sine"), 250);
+        this.playTone(660, 0.25, "sine", 0.6);
+        setTimeout(() => this.playTone(880, 0.35, "sine", 0.6), 250);
         break;
     }
   }

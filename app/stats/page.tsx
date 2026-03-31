@@ -25,21 +25,31 @@ function getSticker(stars: number) {
   return STICKER_BY_STARS[0];
 }
 
-// 요일 이름
 const WEEKDAY_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
 
-function getLast7Days() {
+/** 월간 캘린더 날짜 배열 생성 (앞뒤 빈칸 포함) */
+function getCalendarDays(year: number, month: number) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startWeekday = firstDay.getDay(); // 0=일
+  const daysInMonth = lastDay.getDate();
+
   const today = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    return {
-      dateStr: d.toISOString().split("T")[0],
-      day: d.getDate(),
-      weekday: WEEKDAY_SHORT[d.getDay()],
-      isToday: i === 6,
-    };
-  });
+  const todayStr = today.toISOString().split("T")[0];
+
+  const cells: ({ dateStr: string; day: number; isToday: boolean } | null)[] = [];
+
+  // 앞쪽 빈칸
+  for (let i = 0; i < startWeekday; i++) cells.push(null);
+
+  // 날짜 채우기
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dateStr = date.toISOString().split("T")[0];
+    cells.push({ dateStr, day: d, isToday: dateStr === todayStr });
+  }
+
+  return cells;
 }
 
 function formatTime(seconds: number): string {
@@ -49,24 +59,72 @@ function formatTime(seconds: number): string {
   return s > 0 ? `${m}분 ${s}초` : `${m}분`;
 }
 
-/** 칭찬 스티커판 - 전체 */
+const MONTH_NAMES = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+/** 월 네비게이션 헤더 */
+function MonthNav({ year, month, onChange }: { year: number; month: number; onChange: (y: number, m: number) => void }) {
+  const goPrev = () => {
+    if (month === 0) onChange(year - 1, 11);
+    else onChange(year, month - 1);
+  };
+  const goNext = () => {
+    const now = new Date();
+    const nextDate = month === 11 ? new Date(year + 1, 0, 1) : new Date(year, month + 1, 1);
+    if (nextDate > new Date(now.getFullYear(), now.getMonth() + 1, 0)) return; // 미래 제한
+    if (month === 11) onChange(year + 1, 0);
+    else onChange(year, month + 1);
+  };
+
+  const now = new Date();
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+
+  return (
+    <div className="flex items-center justify-between px-2 mb-3">
+      <button
+        onClick={goPrev}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-sm"
+        style={{ backgroundColor: "#F0EBFF", color: COLORS.primary }}
+      >
+        ◀
+      </button>
+      <span className="text-base font-bold" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+        {year}년 {MONTH_NAMES[month]}
+      </span>
+      <button
+        onClick={goNext}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-sm"
+        style={{
+          backgroundColor: isCurrentMonth ? "#F5F0FF" : "#F0EBFF",
+          color: isCurrentMonth ? "#D0C8E0" : COLORS.primary,
+        }}
+        disabled={isCurrentMonth}
+      >
+        ▶
+      </button>
+    </div>
+  );
+}
+
+/** 칭찬 스티커판 - 전체 (캘린더) */
 function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType }) {
   const allRecords = useStatsStore((s) => s.records);
   const streak = useStatsStore((s) => s.getStreak());
-  const last7 = getLast7Days();
 
-  // 루틴 필터: routineType이 없는 기존 기록은 morning으로 간주
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+
   const records = allRecords.filter((r) => (r.routineType ?? "morning") === routineFilter);
+  const calendarDays = getCalendarDays(year, month);
 
-  const weekRecords = last7.map((d) => ({
-    ...d,
-    record: records.find((r) => r.date === d.dateStr),
-  }));
-
-  const weeklyStars = weekRecords.reduce((sum, { record }) => sum + (record?.totalStars ?? 0), 0);
+  // 이번 달 통계
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const monthRecords = records.filter((r) => r.date.startsWith(monthPrefix));
+  const monthStars = monthRecords.reduce((sum, r) => sum + r.totalStars, 0);
+  const monthCompleted = monthRecords.filter((r) => r.isAllClear).length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
 
       {/* 연속 기록 배지 */}
       {streak > 0 && (
@@ -74,7 +132,7 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 12 }}
-          className="flex items-center justify-center gap-2 py-3"
+          className="flex items-center justify-center gap-2 py-2"
         >
           <div
             className="flex items-center gap-2 px-5 py-2 rounded-full"
@@ -87,7 +145,7 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
         </motion.div>
       )}
 
-      {/* 이번 주 스티커판 */}
+      {/* 캘린더 */}
       <div
         className="rounded-3xl p-4"
         style={{
@@ -96,53 +154,52 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
           boxShadow: "0 4px 0 #E5B85C",
         }}
       >
-        <h2 className="text-center text-base mb-4" style={{ color: COLORS.textDark }}>
-          이번 주 칭찬 스티커
-        </h2>
+        <MonthNav year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
 
-        {/* 7일 스티커 그리드 */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-          {/* 요일 헤더 */}
-          {weekRecords.map(({ dateStr, weekday }) => (
-            <div key={`head-${dateStr}`} className="text-center">
-              <span className="text-[10px]" style={{ color: COLORS.textSub }}>{weekday}</span>
+        {/* 요일 헤더 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+          {WEEKDAY_SHORT.map((wd) => (
+            <div key={wd} className="text-center py-1">
+              <span className="text-[10px] font-bold" style={{ color: COLORS.textSub }}>{wd}</span>
             </div>
           ))}
 
-          {/* 스티커 칸 */}
-          {weekRecords.map(({ dateStr, day, record, isToday }, i) => {
+          {/* 날짜 셀 */}
+          {calendarDays.map((cell, i) => {
+            if (!cell) return <div key={`empty-${i}`} />;
+
+            const record = records.find((r) => r.date === cell.dateStr);
             const sticker = getSticker(record?.totalStars ?? 0);
             const hasRecord = !!record;
 
             return (
               <motion.div
-                key={dateStr}
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: i * 0.05, type: "spring", stiffness: 300, damping: 15 }}
-                className="flex flex-col items-center"
+                key={cell.dateStr}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: Math.min(i * 0.01, 0.3), type: "spring", stiffness: 300, damping: 20 }}
+                className="flex flex-col items-center py-0.5"
               >
-                {/* 스티커 원 */}
                 <div
-                  className="relative flex items-center justify-center rounded-2xl"
+                  className="relative flex items-center justify-center rounded-xl"
                   style={{
-                    width: 42,
-                    height: 42,
-                    backgroundColor: hasRecord ? sticker.color : "#F5F0FF",
-                    border: isToday ? `3px solid ${COLORS.primary}` : "2px solid transparent",
+                    width: 36,
+                    height: 36,
+                    backgroundColor: hasRecord ? sticker.color : cell.isToday ? "#F0EBFF" : "transparent",
+                    border: cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
                     boxShadow: hasRecord ? `0 2px 0 rgba(0,0,0,0.1)` : "none",
-                    transform: hasRecord ? `rotate(${(i % 3 - 1) * 3}deg)` : "none",
                   }}
                 >
                   {hasRecord ? (
-                    <span className="text-xl">{sticker.emoji}</span>
+                    <span className="text-lg">{sticker.emoji}</span>
                   ) : (
-                    <span className="text-xs" style={{ color: "#D0C8E0" }}>{day}</span>
+                    <span className="text-[11px]" style={{ color: cell.isToday ? COLORS.primary : "#C0B8D0" }}>
+                      {cell.day}
+                    </span>
                   )}
                 </div>
-                {/* 별 개수 */}
                 {hasRecord && (
-                  <span className="text-[9px] mt-0.5" style={{ color: COLORS.textSub, fontFamily: "Fredoka" }}>
+                  <span className="text-[8px]" style={{ color: COLORS.textSub, fontFamily: "Fredoka" }}>
                     ★{record!.totalStars}
                   </span>
                 )}
@@ -150,7 +207,22 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
             );
           })}
         </div>
+      </div>
 
+      {/* 월간 요약 */}
+      <div className="flex items-center justify-center gap-6">
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>{monthStars}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>별 모음</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold" style={{ color: COLORS.mint, fontFamily: "Fredoka" }}>{monthCompleted}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>완료 일수</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold" style={{ color: COLORS.accent, fontFamily: "Fredoka" }}>{streak}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>연속 기록</span>
+        </div>
       </div>
 
       {/* 스티커 범례 */}
@@ -166,19 +238,19 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
         })}
       </div>
 
-      {/* 일별 스티커 상세 */}
+      {/* 이번 달 기록 상세 */}
       <div className="space-y-2">
-        {weekRecords.filter(({ record }) => !!record).reverse().map(({ dateStr, day, weekday, record }) => {
-          const sticker = getSticker(record!.totalStars);
+        {monthRecords.slice().reverse().map((record) => {
+          const sticker = getSticker(record.totalStars);
+          const d = new Date(record.date + "T00:00:00");
           return (
             <motion.div
-              key={dateStr}
+              key={record.date}
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               className="flex items-center gap-3 p-3 rounded-2xl"
               style={{ backgroundColor: "white", border: "2px solid #F0EBFF" }}
             >
-              {/* 스티커 */}
               <div
                 className="flex items-center justify-center rounded-xl"
                 style={{
@@ -190,17 +262,15 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
               >
                 <span className="text-2xl">{sticker.emoji}</span>
               </div>
-              {/* 날짜 + 정보 */}
               <div className="flex-1">
                 <p className="text-sm" style={{ color: COLORS.textDark }}>
-                  {day}일 ({weekday})
+                  {d.getDate()}일 ({WEEKDAY_SHORT[d.getDay()]})
                 </p>
                 <p className="text-xs" style={{ color: COLORS.textSub }}>
-                  {formatTime(record!.totalSeconds)} · {sticker.label}
+                  {formatTime(record.totalSeconds)} · {sticker.label}
                 </p>
               </div>
-              {/* 완료 뱃지 */}
-              {record!.isAllClear && (
+              {record.isAllClear && (
                 <span
                   className="text-[10px] px-2 py-1 rounded-full text-white"
                   style={{ backgroundColor: COLORS.mint }}
@@ -213,11 +283,11 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
         })}
       </div>
 
-      {records.length === 0 && (
+      {monthRecords.length === 0 && (
         <div className="text-center py-6">
           <p className="text-3xl mb-2">📋</p>
           <p className="text-sm" style={{ color: COLORS.textSub }}>
-            아직 스티커가 없어요!<br />{routineFilter === "morning" ? "등원" : "잠자리"} 준비를 완료하면 스티커를 받을 수 있어요.
+            이번 달 스티커가 없어요!<br />{routineFilter === "morning" ? "등원" : "잠자리"} 준비를 완료하면 스티커를 받을 수 있어요.
           </p>
         </div>
       )}
@@ -225,34 +295,29 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
   );
 }
 
-/** 칭찬 스티커판 - 개인별 */
+/** 칭찬 스티커판 - 개인별 (캘린더) */
 function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string; name: string; characterType: "bunny" | "bear" | "cat" | "penguin" }; routineFilter: RoutineType }) {
   const allRecords = useStatsStore((s) => s.records);
-  const last7 = getLast7Days();
+
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
 
   const records = allRecords.filter((r) => (r.routineType ?? "morning") === routineFilter);
+  const calendarDays = getCalendarDays(year, month);
 
-  const playerWeek = last7.map((d) => {
-    const record = records.find((r) => r.date === d.dateStr);
-    const session = record?.sessions.find((s) => s.profileId === profile.id);
-    return { ...d, session };
-  });
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const monthRecords = records.filter((r) => r.date.startsWith(monthPrefix));
 
-  const totalStars = playerWeek.reduce((sum, { session }) => sum + (session?.stars ?? 0), 0);
-  const completedDays = playerWeek.filter(({ session }) => session?.isAllClear).length;
-
-  const allSessions = records.flatMap((r) =>
+  // 개인 월간 통계
+  const monthSessions = monthRecords.flatMap((r) =>
     r.sessions.filter((s) => s.profileId === profile.id)
   );
-  const lifetimeStars = allSessions.reduce((sum, s) => sum + s.stars, 0);
-  const lifetimeCompleted = allSessions.filter((s) => s.isAllClear).length;
-  const positiveSessions = allSessions.filter((s) => s.seconds > 0);
-  const bestTime = positiveSessions.length > 0
-    ? Math.min(...positiveSessions.map((s) => s.seconds))
-    : 0;
+  const monthStars = monthSessions.reduce((sum, s) => sum + s.stars, 0);
+  const monthCompleted = monthSessions.filter((s) => s.isAllClear).length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* 캐릭터 프로필 */}
       <div className="flex flex-col items-center gap-1">
         <div className="char-idle">
@@ -261,7 +326,7 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
         <p className="text-lg" style={{ color: COLORS.primary }}>{profile.name}</p>
       </div>
 
-      {/* 이번 주 스티커판 */}
+      {/* 캘린더 */}
       <div
         className="rounded-3xl p-4"
         style={{
@@ -270,48 +335,51 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
           boxShadow: "0 4px 0 #E5B85C",
         }}
       >
-        <h2 className="text-center text-sm mb-3" style={{ color: COLORS.textSub }}>
-          {profile.name}의 스티커판
-        </h2>
+        <MonthNav year={year} month={month} onChange={(y, m) => { setYear(y); setMonth(m); }} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-          {playerWeek.map(({ dateStr, weekday }) => (
-            <div key={`head-${dateStr}`} className="text-center">
-              <span className="text-[10px]" style={{ color: COLORS.textSub }}>{weekday}</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+          {WEEKDAY_SHORT.map((wd) => (
+            <div key={wd} className="text-center py-1">
+              <span className="text-[10px] font-bold" style={{ color: COLORS.textSub }}>{wd}</span>
             </div>
           ))}
 
-          {playerWeek.map(({ dateStr, day, session, isToday }, i) => {
+          {calendarDays.map((cell, i) => {
+            if (!cell) return <div key={`empty-${i}`} />;
+
+            const record = records.find((r) => r.date === cell.dateStr);
+            const session = record?.sessions.find((s) => s.profileId === profile.id);
             const sticker = getSticker(session?.stars ?? 0);
             const hasSession = !!session;
 
             return (
               <motion.div
-                key={dateStr}
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: i * 0.05, type: "spring", stiffness: 300, damping: 15 }}
-                className="flex flex-col items-center"
+                key={cell.dateStr}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: Math.min(i * 0.01, 0.3), type: "spring", stiffness: 300, damping: 20 }}
+                className="flex flex-col items-center py-0.5"
               >
                 <div
-                  className="relative flex items-center justify-center rounded-2xl"
+                  className="relative flex items-center justify-center rounded-xl"
                   style={{
-                    width: 42,
-                    height: 42,
-                    backgroundColor: hasSession ? sticker.color : "#F5F0FF",
-                    border: isToday ? `3px solid ${COLORS.primary}` : "2px solid transparent",
+                    width: 36,
+                    height: 36,
+                    backgroundColor: hasSession ? sticker.color : cell.isToday ? "#F0EBFF" : "transparent",
+                    border: cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
                     boxShadow: hasSession ? `0 2px 0 rgba(0,0,0,0.1)` : "none",
-                    transform: hasSession ? `rotate(${(i % 3 - 1) * 3}deg)` : "none",
                   }}
                 >
                   {hasSession ? (
-                    <span className="text-xl">{sticker.emoji}</span>
+                    <span className="text-lg">{sticker.emoji}</span>
                   ) : (
-                    <span className="text-xs" style={{ color: "#D0C8E0" }}>{day}</span>
+                    <span className="text-[11px]" style={{ color: cell.isToday ? COLORS.primary : "#C0B8D0" }}>
+                      {cell.day}
+                    </span>
                   )}
                 </div>
                 {hasSession && (
-                  <span className="text-[9px] mt-0.5" style={{ color: COLORS.textSub, fontFamily: "Fredoka" }}>
+                  <span className="text-[8px]" style={{ color: COLORS.textSub, fontFamily: "Fredoka" }}>
                     ★{session!.stars}
                   </span>
                 )}
@@ -319,16 +387,29 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
             );
           })}
         </div>
-
       </div>
 
-      {/* 일별 스티커 상세 */}
+      {/* 월간 요약 */}
+      <div className="flex items-center justify-center gap-6">
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>{monthStars}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>별 모음</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-bold" style={{ color: COLORS.mint, fontFamily: "Fredoka" }}>{monthCompleted}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>완료 일수</span>
+        </div>
+      </div>
+
+      {/* 일별 상세 */}
       <div className="space-y-2">
-        {playerWeek.filter(({ session }) => !!session).reverse().map(({ dateStr, day, weekday, session }) => {
-          const sticker = getSticker(session!.stars);
+        {monthRecords.filter((r) => r.sessions.some((s) => s.profileId === profile.id)).reverse().map((record) => {
+          const session = record.sessions.find((s) => s.profileId === profile.id)!;
+          const sticker = getSticker(session.stars);
+          const d = new Date(record.date + "T00:00:00");
           return (
             <motion.div
-              key={dateStr}
+              key={record.date}
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               className="flex items-center gap-3 p-3 rounded-2xl"
@@ -347,13 +428,13 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
               </div>
               <div className="flex-1">
                 <p className="text-sm" style={{ color: COLORS.textDark }}>
-                  {day}일 ({weekday})
+                  {d.getDate()}일 ({WEEKDAY_SHORT[d.getDay()]})
                 </p>
                 <p className="text-xs" style={{ color: COLORS.textSub }}>
-                  {formatTime(session!.seconds)} · {sticker.label}
+                  {formatTime(session.seconds)} · {sticker.label}
                 </p>
               </div>
-              {session!.isAllClear && (
+              {session.isAllClear && (
                 <span
                   className="text-[10px] px-2 py-1 rounded-full text-white"
                   style={{ backgroundColor: COLORS.mint }}
@@ -366,10 +447,10 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
         })}
       </div>
 
-      {allSessions.length === 0 && (
+      {monthSessions.length === 0 && (
         <div className="text-center py-6">
           <p className="text-sm" style={{ color: COLORS.textSub }}>
-            {profile.name}의 스티커가 아직 없어요!
+            {profile.name}의 이번 달 스티커가 없어요!
           </p>
         </div>
       )}

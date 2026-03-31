@@ -38,17 +38,25 @@ function piePath(cx: number, cy: number, r: number, startDeg: number, endDeg: nu
 export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 180, enableAlerts = true, isPaused = false, onTimeClick }: CountdownTimerProps) {
   const lastTickRef = useRef(remainingSeconds);
   const alertFiredRef = useRef(false);
+  const overtimeFiredRef = useRef(false);
   const intervalAlertedRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     // Reset alert refs when task changes (totalSeconds changes)
     alertFiredRef.current = false;
+    overtimeFiredRef.current = false;
     intervalAlertedRef.current = new Set();
   }, [totalSeconds]);
 
   useEffect(() => {
     if (remainingSeconds > 0 && remainingSeconds <= 10 && remainingSeconds !== lastTickRef.current) {
       soundManager.play("tick");
+    }
+
+    // 시간 초과 알림
+    if (remainingSeconds <= 0 && lastTickRef.current > 0 && !overtimeFiredRef.current) {
+      overtimeFiredRef.current = true;
+      soundManager.play("alert");
     }
 
     if (enableAlerts && remainingSeconds > 0 && remainingSeconds !== lastTickRef.current) {
