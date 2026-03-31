@@ -8,24 +8,33 @@ import { COLORS } from "@/lib/constants";
 interface ProgressStepsProps {
   tasks: TaskItem[];
   currentStep: number;
+  completedCount?: number;  // 실제 완료된 항목 수
   compact?: boolean;
+  onStepClick?: (index: number) => void;
+  viewingStep?: number;
 }
 
-export default function ProgressSteps({ tasks, currentStep, compact }: ProgressStepsProps) {
+export default function ProgressSteps({ tasks, currentStep, completedCount, compact, onStepClick, viewingStep }: ProgressStepsProps) {
   return (
     <div className="w-full flex items-center justify-center gap-1 px-2">
       {tasks.map((task, i) => {
-        const done = i < currentStep;
+        const done = i < (completedCount ?? currentStep);
         const active = i === currentStep;
+        const isViewing = viewingStep === i;
 
         return (
           <div key={task.id} className="flex items-center">
             {/* 스텝 아이템 */}
             <motion.div
-              animate={active ? { scale: [1, 1.1, 1] } : {}}
-              transition={active ? { repeat: Infinity, duration: 2 } : {}}
+              animate={active && viewingStep === undefined ? { scale: [1, 1.1, 1] } : {}}
+              transition={active && viewingStep === undefined ? { repeat: Infinity, duration: 2 } : {}}
+              whileTap={onStepClick ? { scale: 0.9 } : undefined}
               className="flex flex-col items-center"
-              style={{ opacity: done ? 0.5 : 1 }}
+              style={{
+                opacity: done && !isViewing ? 0.5 : 1,
+                cursor: onStepClick ? "pointer" : "default",
+              }}
+              onClick={() => onStepClick?.(i)}
             >
               {/* 아이콘 원 */}
               <div
@@ -34,8 +43,12 @@ export default function ProgressSteps({ tasks, currentStep, compact }: ProgressS
                   width: compact ? 32 : 38,
                   height: compact ? 32 : 38,
                   backgroundColor: done ? COLORS.mint : active ? COLORS.primary : "#F0EBFF",
-                  border: active ? `3px solid ${COLORS.primary}` : "2px solid transparent",
-                  boxShadow: active ? `0 0 0 3px rgba(108,92,231,0.2)` : "none",
+                  border: isViewing
+                    ? `3px solid ${COLORS.secondary}`
+                    : active ? `3px solid ${COLORS.primary}` : "2px solid transparent",
+                  boxShadow: isViewing
+                    ? `0 0 0 3px rgba(255,165,0,0.3)`
+                    : active ? `0 0 0 3px rgba(108,92,231,0.2)` : "none",
                 }}
               >
                 {done ? (
@@ -46,9 +59,9 @@ export default function ProgressSteps({ tasks, currentStep, compact }: ProgressS
                   <TaskIcon icon={task.icon} size={compact ? 20 : 24} />
                 )}
               </div>
-              {/* 라벨 (현재만 표시) */}
-              {active && !compact && (
-                <span className="text-[10px] mt-0.5 whitespace-nowrap" style={{ color: COLORS.primary }}>
+              {/* 라벨 (현재 또는 보고 있는 스텝 표시) */}
+              {((active && viewingStep === undefined) || isViewing) && !compact && (
+                <span className="text-[10px] mt-0.5 whitespace-nowrap" style={{ color: isViewing ? COLORS.secondary : COLORS.primary }}>
                   {task.label}
                 </span>
               )}
@@ -61,7 +74,7 @@ export default function ProgressSteps({ tasks, currentStep, compact }: ProgressS
                 style={{
                   width: compact ? 8 : 12,
                   height: 2,
-                  backgroundColor: i < currentStep ? COLORS.mint : "#E8E0F0",
+                  backgroundColor: i < (completedCount ?? currentStep) ? COLORS.mint : "#E8E0F0",
                   borderRadius: 1,
                 }}
               />

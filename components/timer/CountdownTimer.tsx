@@ -9,6 +9,8 @@ interface CountdownTimerProps {
   remainingSeconds: number;
   size?: number;
   enableAlerts?: boolean;
+  isPaused?: boolean;  // 대기/일시정지 상태
+  onTimeClick?: () => void;  // 중앙 시간 터치 콜백
 }
 
 function getTimerColor(remaining: number, total: number): string {
@@ -33,7 +35,7 @@ function piePath(cx: number, cy: number, r: number, startDeg: number, endDeg: nu
   return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
 }
 
-export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 180, enableAlerts = true }: CountdownTimerProps) {
+export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 180, enableAlerts = true, isPaused = false, onTimeClick }: CountdownTimerProps) {
   const lastTickRef = useRef(remainingSeconds);
   const alertFiredRef = useRef(false);
   const intervalAlertedRef = useRef<Set<number>>(new Set());
@@ -104,8 +106,8 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
         {remainAngle > 0 && (
           <path
             d={piePath(cx, cy, outerR - 4, 0, remainAngle)}
-            fill={color}
-            opacity="0.4"
+            fill={isPaused ? "#C8C0D8" : color}
+            opacity={isPaused ? 0.25 : 0.4}
           />
         )}
 
@@ -132,6 +134,7 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
               stroke={isMajor ? COLORS.textDark : "#D0C8E0"}
               strokeWidth={isMajor ? 2 : 1}
               strokeLinecap="round"
+              opacity={isPaused ? 0.4 : 1}
             />
           );
         })}
@@ -151,6 +154,7 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
               fontFamily="Fredoka, sans-serif"
               fontWeight={m === 0 ? "bold" : "normal"}
               fill={m === 0 ? COLORS.textDark : COLORS.textSub}
+              opacity={isPaused ? 0.4 : 1}
             >
               {m}
             </text>
@@ -169,33 +173,54 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
           );
         })()}
 
-        {/* 중앙 원 (노브) */}
-        <circle cx={cx} cy={cy} r={innerR} fill="white" stroke="#E8E0F0" strokeWidth="2" />
+        {/* 중앙 원 (노브) - 클릭 가능 */}
+        <g
+          onClick={onTimeClick}
+          style={{ cursor: onTimeClick ? "pointer" : "default" }}
+        >
+          <circle cx={cx} cy={cy} r={innerR} fill="white" stroke="#E8E0F0" strokeWidth="2" />
 
-        {/* 중앙 시간 표시 - 크게 */}
-        <text
-          x={cx}
-          y={cy - 4}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize={isOvertime ? "22" : "26"}
-          fontWeight="bold"
-          fontFamily="Fredoka, sans-serif"
-          fill={isOvertime ? COLORS.timerRed : COLORS.textDark}
-        >
-          {isOvertime ? `+${mm}:${ss}` : `${mm}:${ss}`}
-        </text>
-        <text
-          x={cx}
-          y={cy + 16}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="9"
-          fontFamily="Jua, sans-serif"
-          fill={isOvertime ? COLORS.timerRed : COLORS.textSub}
-        >
-          {isOvertime ? "시간 초과!" : `${Number(mm)}분 ${Number(ss)}초`}
-        </text>
+          {/* 중앙 시간 표시 - 크게 */}
+          <text
+            x={cx}
+            y={cy - 4}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={isOvertime ? "22" : "26"}
+            fontWeight="bold"
+            fontFamily="Fredoka, sans-serif"
+            fill={isOvertime ? COLORS.timerRed : COLORS.textDark}
+          >
+            {isOvertime ? `+${mm}:${ss}` : `${mm}:${ss}`}
+          </text>
+          <text
+            x={cx}
+            y={cy + 16}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="9"
+            fontFamily="Jua, sans-serif"
+            fill={isOvertime ? COLORS.timerRed : COLORS.textSub}
+          >
+            {isOvertime ? "시간 초과!" : `${Number(mm)}분 ${Number(ss)}초`}
+          </text>
+
+          {/* 대기 상태: 탭하여 시작 안내 */}
+          {isPaused && !isOvertime && (
+            <text
+              x={cx}
+              y={cy + 26}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="8"
+              fontFamily="Jua, sans-serif"
+              fill={COLORS.primary}
+              opacity={0.7}
+            >
+              ▶ 탭하여 시작
+            </text>
+          )}
+        </g>
 
       </svg>
     </div>

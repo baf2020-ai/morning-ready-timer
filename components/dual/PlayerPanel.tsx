@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/stores/useGameStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import CountdownTimer from "@/components/timer/CountdownTimer";
@@ -28,13 +28,64 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const completeTask = useGameStore((s) => s.completeTask);
   const getRemainingSeconds = useGameStore((s) => s.getRemainingSeconds);
   const getPlayerTasks = useGameStore((s) => s.getPlayerTasks);
+  const getTaskDuration = useGameStore((s) => s.getTaskDuration);
+  const startTimer = useGameStore((s) => s.startTimer);
+  const pauseTimer = useGameStore((s) => s.pauseTimer);
+  const goToTask = useGameStore((s) => s.goToTask);
+  const adjustTime = useGameStore((s) => s.adjustTime);
+  const setDuration = useGameStore((s) => s.setDuration);
   const profiles = useSettingsStore((s) => s.settings.profiles);
   void now;
+
+  const [showTimeEditor, setShowTimeEditor] = useState(false);
+  const [editMinutes, setEditMinutes] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleTimeClick = useCallback(() => {
+    soundManager.play("tap");
+    const dur = getTaskDuration(playerIndex);
+    setEditMinutes(Math.round(dur / 60));
+    setShowTimeEditor(true);
+  }, [getTaskDuration, playerIndex]);
+
+  const handleTimeConfirm = useCallback(() => {
+    const newSeconds = Math.max(1, editMinutes) * 60;
+    setDuration(playerIndex, newSeconds);
+    setShowTimeEditor(false);
+  }, [editMinutes, setDuration, playerIndex]);
+
+  // 에디터 열릴 때 input 포커스
+  useEffect(() => {
+    if (showTimeEditor && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [showTimeEditor]);
 
   const handleComplete = useCallback(() => {
     soundManager.play("tap");
     completeTask(playerIndex);
   }, [completeTask, playerIndex]);
+
+  const handleStartTimer = useCallback(() => {
+    soundManager.play("tap");
+    startTimer(playerIndex);
+  }, [startTimer, playerIndex]);
+
+  const handlePauseTimer = useCallback(() => {
+    soundManager.play("tap");
+    pauseTimer(playerIndex);
+  }, [pauseTimer, playerIndex]);
+
+  const handleAdjustTime = useCallback((delta: number) => {
+    soundManager.play("tap");
+    adjustTime(playerIndex, delta);
+  }, [adjustTime, playerIndex]);
+
+  const handleStepClick = useCallback((stepIndex: number) => {
+    soundManager.play("tap");
+    goToTask(playerIndex, stepIndex);
+  }, [goToTask, playerIndex]);
 
   if (!session || !session.players[playerIndex] || profiles.length === 0) return null;
 
@@ -43,8 +94,8 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const tasks = getPlayerTasks(playerIndex);
   const currentTask = tasks[player.currentTaskIndex];
   if (!currentTask && !player.isCompleted) return null;
-  const nextTask = tasks[player.currentTaskIndex + 1] ?? null;
   const remaining = getRemainingSeconds(playerIndex);
+  const duration = getTaskDuration(playerIndex);
 
   const playerColor = PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
 
@@ -89,7 +140,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const timerSize = compact ? 220 : 280;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-3 py-2 gap-1">
+    <div className="relative flex flex-col items-center justify-center h-full px-3 py-2 gap-1">
 
       {/* 1. 상단: 이름 + 현재 태스크 */}
       <div className="flex items-center gap-3 mb-2">
@@ -101,7 +152,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         </span>
       </div>
 
-      {/* 2. 타이머 (가장 크게, 화면 중심) */}
+      {/* 2. 타이머 */}
       <motion.div
         key={currentTask.id}
         initial={{ scale: 0.8, opacity: 0 }}
@@ -110,13 +161,64 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         className="flex flex-col items-center"
       >
         <CountdownTimer
-          totalSeconds={currentTask.durationSeconds}
+          totalSeconds={duration}
           remainingSeconds={remaining}
           size={timerSize}
+          isPaused={!player.isTimerRunning}
+          onTimeClick={handleTimeClick}
         />
       </motion.div>
 
-      {/* 3. 태스크 아이콘 + 이름 (타이머 바로 아래) */}
+      {/* 3. 제어 버튼: [-1분] [시작/정지] [+1분] */}
+      <div className="flex items-center gap-3 mt-1">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => handleAdjustTime(-60)}
+          className="flex items-center justify-center rounded-full font-bold text-sm"
+          style={{
+            width: 40, height: 40,
+            backgroundColor: "#F0EBFF",
+            color: COLORS.primary,
+          }}
+        >
+          -1
+        </motion.button>
+
+        {player.isTimerRunning ? (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handlePauseTimer}
+            className="flex items-center justify-center rounded-full px-5 py-2 font-bold text-white text-base"
+            style={{ backgroundColor: COLORS.primary, minWidth: 100 }}
+          >
+            ⏸ 정지
+          </motion.button>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleStartTimer}
+            className="flex items-center justify-center rounded-full px-5 py-2 font-bold text-white text-base"
+            style={{ backgroundColor: COLORS.mint, minWidth: 100 }}
+          >
+            ▶ 시작
+          </motion.button>
+        )}
+
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => handleAdjustTime(60)}
+          className="flex items-center justify-center rounded-full font-bold text-sm"
+          style={{
+            width: 40, height: 40,
+            backgroundColor: "#F0EBFF",
+            color: COLORS.primary,
+          }}
+        >
+          +1
+        </motion.button>
+      </div>
+
+      {/* 4. 태스크 아이콘 + 이름 */}
       <motion.div
         key={`task-${currentTask.id}`}
         initial={{ y: 10, opacity: 0 }}
@@ -129,7 +231,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         </h2>
       </motion.div>
 
-      {/* 4. 완료 버튼 - 플레이어별 색상 */}
+      {/* 5. 완료 버튼 */}
       <motion.button
         whileTap={{ scale: 0.88, rotate: -2 }}
         onClick={handleComplete}
@@ -143,9 +245,9 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         완료!
       </motion.button>
 
-      {/* 5. 예상 완료 시간 + 다음 항목 */}
+      {/* 6. 예상 완료 시간 + 다음 항목 */}
       {(() => {
-        // 현재 태스크 남은 시간 + 이후 태스크들의 총 시간
+        const nextTask = tasks[player.currentTaskIndex + 1] ?? null;
         const remainingTasksDuration = tasks
           .slice(player.currentTaskIndex + 1)
           .reduce((sum, t) => sum + t.durationSeconds, 0);
@@ -168,14 +270,95 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         );
       })()}
 
-      {/* 6. 스텝 진행 상태 */}
+      {/* 7. 스텝 진행 상태 (클릭으로 이동) */}
       <div className="w-full flex flex-col items-center mt-2">
         <ProgressSteps
           tasks={tasks}
           currentStep={player.currentTaskIndex}
+          completedCount={player.results.length}
           compact={compact}
+          onStepClick={handleStepClick}
         />
       </div>
+
+      {/* 시간 설정 모달 */}
+      <AnimatePresence>
+        {showTimeEditor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+            onClick={() => setShowTimeEditor(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="sticker-card p-6 flex flex-col items-center gap-4"
+              style={{ minWidth: 240 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-lg font-bold" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+                시간 설정 (분)
+              </p>
+              <div className="flex items-center gap-3">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setEditMinutes((m) => Math.max(1, m - 1))}
+                  className="flex items-center justify-center rounded-full font-bold text-lg"
+                  style={{ width: 44, height: 44, backgroundColor: "#F0EBFF", color: COLORS.primary }}
+                >
+                  -
+                </motion.button>
+                <input
+                  ref={inputRef}
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={editMinutes}
+                  onChange={(e) => setEditMinutes(Math.max(1, Math.min(120, Number(e.target.value) || 1)))}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleTimeConfirm(); }}
+                  className="text-center text-3xl font-bold rounded-xl border-2 outline-none"
+                  style={{
+                    width: 80,
+                    height: 56,
+                    borderColor: COLORS.primary,
+                    color: COLORS.textDark,
+                    fontFamily: "Fredoka, sans-serif",
+                  }}
+                />
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setEditMinutes((m) => Math.min(120, m + 1))}
+                  className="flex items-center justify-center rounded-full font-bold text-lg"
+                  style={{ width: 44, height: 44, backgroundColor: "#F0EBFF", color: COLORS.primary }}
+                >
+                  +
+                </motion.button>
+              </div>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setShowTimeEditor(false)}
+                  className="flex-1 py-2.5 rounded-full font-bold text-base"
+                  style={{ backgroundColor: "#F0EBFF", color: COLORS.textSub }}
+                >
+                  취소
+                </button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleTimeConfirm}
+                  className="flex-1 py-2.5 rounded-full font-bold text-base text-white"
+                  style={{ backgroundColor: COLORS.primary }}
+                >
+                  확인
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

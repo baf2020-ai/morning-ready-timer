@@ -37,7 +37,10 @@ export interface PlayerState {
   results: TaskResult[];
   isCompleted: boolean;
   startedAt: string;
-  taskStartedAt: number; // Date.now() for timer calculation
+  taskStartedAt: number;          // Date.now() for timer calculation
+  isTimerRunning: boolean;        // false = 대기/일시정지, true = 카운트다운 중
+  viewingTaskIndex?: number;      // 스텝 클릭 미리보기 (undefined = currentTaskIndex)
+  adjustedDuration?: number;      // +/-1분 세션 한정 조정 (undefined = 원래 시간)
 }
 
 /** 게임 세션 */
