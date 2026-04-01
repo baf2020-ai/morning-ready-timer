@@ -84,34 +84,23 @@ export default function PlayContent() {
     <div className="relative flex flex-col h-full paper-bg" style={{ backgroundColor: COLORS.bgLight }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-2 safe-top"
+        className="flex items-center justify-between px-5 pt-3 pb-4 safe-top"
         style={{ backgroundColor: "white", borderBottom: `2px solid #F0EBFF` }}
       >
         <button
           onClick={handleHome}
-          className="text-sm px-3 py-1.5 rounded-full"
-          style={{ color: COLORS.textSub, backgroundColor: "rgba(108,92,231,0.06)" }}
+          className="text-base px-4 py-2 rounded-full font-bold"
+          style={{ color: COLORS.textSub, backgroundColor: "rgba(108,92,231,0.06)", fontFamily: "Jua, sans-serif" }}
         >
           ← 홈
         </button>
-        <h1 className="text-base" style={{ color: COLORS.primary }}>
+        <h1 className="text-lg font-bold" style={{ color: COLORS.primary, fontFamily: "Jua, sans-serif" }}>
           {ROUTINE_THEME[session.routineType ?? "morning"].headerTitle}
         </h1>
-        <div className="flex gap-2">
-          <button
-            onClick={handlePauseToggle}
-            className="w-9 h-9 flex items-center justify-center rounded-full"
-            style={{ backgroundColor: "rgba(108,92,231,0.06)", color: COLORS.primary }}
-          >
-            {session.isPaused ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="3" width="4" height="18" rx="1" /><rect x="15" y="3" width="4" height="18" rx="1" /></svg>
-            )}
-          </button>
+        <div className="flex gap-3">
           <button
             onClick={toggleMute}
-            className="w-9 h-9 flex items-center justify-center rounded-full"
+            className="w-10 h-10 flex items-center justify-center rounded-full"
             style={{ backgroundColor: "rgba(108,92,231,0.06)", color: COLORS.primary }}
           >
             {session.isMuted ? (

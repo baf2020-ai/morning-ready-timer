@@ -42,6 +42,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const goToTask = useGameStore((s) => s.goToTask);
   const adjustTime = useGameStore((s) => s.adjustTime);
   const setDuration = useGameStore((s) => s.setDuration);
+  const restartPlayer = useGameStore((s) => s.restartPlayer);
   const profiles = useSettingsStore((s) => s.settings.profiles);
   void now;
 
@@ -190,12 +191,21 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           </p>
           <p className="text-xs" style={{ color: COLORS.textSub }}>오늘의 루틴!</p>
         </div>
-        <span
-          className="ml-auto text-sm px-3 py-1 rounded-full font-bold shrink-0"
-          style={{ backgroundColor: "white", color: COLORS.primary, border: `1.5px solid ${COLORS.primary}` }}
-        >
-          {player.currentTaskIndex + 1} / {tasks.length}
-        </span>
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => { if (confirm(`${profile.name} 처음부터 다시 시작할까요?`)) restartPlayer(playerIndex); }}
+            className="text-sm px-3 py-1.5 rounded-full font-bold"
+            style={{ color: COLORS.accent, backgroundColor: "rgba(232,67,147,0.06)", fontFamily: "Jua, sans-serif" }}
+          >
+            처음부터 다시시작
+          </button>
+          <span
+            className="text-sm px-3 py-1 rounded-full font-bold"
+            style={{ backgroundColor: "white", color: COLORS.primary, border: `1.5px solid ${COLORS.primary}` }}
+          >
+            {player.currentTaskIndex + 1} / {tasks.length}
+          </span>
+        </div>
       </div>
 
       {/* 2. 콘텐츠 영역 (스크롤, 중앙 정렬) */}
