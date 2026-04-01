@@ -14,6 +14,17 @@ import Character from "@/components/svg/characters/Character";
 import { SunIcon, MoonIcon } from "@/components/svg/icons/RoutineIcons";
 import type { CharacterType, TaskIconType, RoutineType } from "@/lib/types";
 
+const PROFILE_BG_COLORS = [
+  { value: "#6C5CE7", label: "보라" },
+  { value: "#E84393", label: "핑크" },
+  { value: "#00B894", label: "민트" },
+  { value: "#54A0FF", label: "파랑" },
+  { value: "#FFAD42", label: "노랑" },
+  { value: "#FF6B6B", label: "빨강" },
+  { value: "#A29BFE", label: "연보라" },
+  { value: "#FDA7DF", label: "연핑크" },
+];
+
 const ICON_OPTIONS: { value: TaskIconType; label: string }[] = [
   { value: "blanket", label: "이불" },
   { value: "meal", label: "밥" },
@@ -186,6 +197,22 @@ export default function SettingsPage() {
                     >
                       {c.label}
                     </button>
+                  ))}
+                </div>
+                <div className="flex gap-1.5 items-center">
+                  <span className="text-xs mr-1" style={{ color: COLORS.textSub }}>배경색</span>
+                  {PROFILE_BG_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => updateProfile(profile.id, { bgColor: c.value })}
+                      className="w-6 h-6 rounded-full border-2 transition-all"
+                      style={{
+                        backgroundColor: c.value,
+                        borderColor: (profile.bgColor ?? COLORS.primary) === c.value ? COLORS.textDark : "transparent",
+                        transform: (profile.bgColor ?? COLORS.primary) === c.value ? "scale(1.2)" : "scale(1)",
+                      }}
+                      title={c.label}
+                    />
                   ))}
                 </div>
               </div>

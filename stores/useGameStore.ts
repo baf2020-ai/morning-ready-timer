@@ -15,6 +15,7 @@ interface GameStore {
   resumeGame: () => void;
   toggleMute: () => void;
   resetGame: () => void;
+  restartGame: () => void;
   tick: () => void;
   getRemainingSeconds: (playerIndex: number) => number;
   getElapsedSeconds: (playerIndex: number) => number;
@@ -381,6 +382,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetGame: () => {
     set({ session: null });
+  },
+
+  restartGame: () => {
+    const { session } = get();
+    if (!session) return;
+    const timestamp = Date.now();
+    const players: PlayerState[] = session.players.map((p) => ({
+      profileId: p.profileId,
+      currentTaskIndex: 0,
+      results: [],
+      isCompleted: false,
+      startedAt: new Date(timestamp).toISOString(),
+      taskStartedAt: timestamp,
+      isTimerRunning: false,
+      activeRunningTaskIndex: undefined,
+      viewingTaskIndex: undefined,
+      adjustedDuration: undefined,
+      durationOverrides: {},
+      elapsedOverrides: {},
+    }));
+    set({
+      session: { ...session, isPaused: false, players },
+      now: timestamp,
+    });
   },
 
   tick: () => {

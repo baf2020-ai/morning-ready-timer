@@ -11,7 +11,15 @@ import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
 import { soundManager } from "@/lib/sounds";
 
-// 플레이어별 버튼 색상
+function adjustColorBrightness(hex: string, amount: number): string {
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.max(0, Math.min(255, ((num >> 16) & 0xFF) + amount));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xFF) + amount));
+  const b = Math.max(0, Math.min(255, (num & 0xFF) + amount));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
+// 플레이어별 기본 버튼 색상
 const PLAYER_COLORS = [
   { bg: COLORS.primary, shadow: "#5041C0" },      // 보라
   { bg: COLORS.accent, shadow: "#C0306E" },        // 핑크
@@ -97,7 +105,11 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const remaining = getRemainingSeconds(playerIndex);
   const duration = getTaskDuration(playerIndex);
 
-  const playerColor = PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
+  const defaultColor = PLAYER_COLORS[playerIndex % PLAYER_COLORS.length];
+  const playerColor = {
+    bg: profile.bgColor ?? defaultColor.bg,
+    shadow: profile.bgColor ? adjustColorBrightness(profile.bgColor, -30) : defaultColor.shadow,
+  };
 
   if (player.isCompleted) {
     const totalStars = player.results.reduce((sum, r) => sum + r.stars, 0);

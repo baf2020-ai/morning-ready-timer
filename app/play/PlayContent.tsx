@@ -18,6 +18,7 @@ export default function PlayContent() {
   const pauseGame = useGameStore((s) => s.pauseGame);
   const resumeGame = useGameStore((s) => s.resumeGame);
   const resetGame = useGameStore((s) => s.resetGame);
+  const restartGame = useGameStore((s) => s.restartGame);
   const addRecord = useStatsStore((s) => s.addRecord);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const navigatedRef = useRef(false);
@@ -139,6 +140,16 @@ export default function PlayContent() {
               } as React.CSSProperties}
             >
               계속하기
+            </button>
+            <button
+              onClick={() => { if (confirm("처음부터 다시 시작할까요?")) restartGame(); }}
+              className="jelly-btn px-8 py-3 text-lg text-white"
+              style={{
+                backgroundColor: COLORS.primary,
+                "--btn-shadow": "#4A3AC7",
+              } as React.CSSProperties}
+            >
+              다시 시작
             </button>
           </div>
         </div>

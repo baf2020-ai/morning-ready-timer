@@ -65,6 +65,7 @@ export interface PlayerProfile {
   id: string;
   name: string;
   characterType: CharacterType;
+  bgColor?: string;
   tasks: TaskItem[];
   bedtimeTasks: TaskItem[];
 }
