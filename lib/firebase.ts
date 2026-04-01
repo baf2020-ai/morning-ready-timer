@@ -1,14 +1,22 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, type Database } from "firebase/database";
 
-// Firebase 설정 - localStorage에서 로드
+// 기본 Firebase 설정 (앱 내장)
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCh0DBt1IJlxOvYmsIF1yVHPndXHOr_1PE",
+  authDomain: "ready-timer.firebaseapp.com",
+  databaseURL: "https://ready-timer-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ready-timer",
+};
+
+// Firebase 설정 - localStorage 우선, 없으면 기본값 사용
 function getFirebaseConfig() {
   if (typeof window === "undefined") return null;
   const stored = localStorage.getItem("mrt-firebase-config");
   if (stored) {
-    try { return JSON.parse(stored); } catch { return null; }
+    try { return JSON.parse(stored); } catch { /* fall through */ }
   }
-  return null;
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 let db: Database | null = null;
@@ -45,9 +53,9 @@ export function getFirebaseConfigStored() {
   if (typeof window === "undefined") return null;
   const stored = localStorage.getItem("mrt-firebase-config");
   if (stored) {
-    try { return JSON.parse(stored); } catch { return null; }
+    try { return JSON.parse(stored); } catch { /* fall through */ }
   }
-  return null;
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 // ── 가족 코드 관리 ──
