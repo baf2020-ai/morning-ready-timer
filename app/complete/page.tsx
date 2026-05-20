@@ -6,8 +6,9 @@ import { useGameStore } from "@/stores/useGameStore";
 import { useStatsStore } from "@/stores/useStatsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import Confetti from "@/components/gamification/Confetti";
+import AppleTreeReward from "@/components/gamification/AppleTreeReward";
 import Character from "@/components/svg/characters/Character";
-import { COLORS, PRAISE_MESSAGES, ROUTINE_THEME } from "@/lib/constants";
+import { COLORS, PRAISE_MESSAGES } from "@/lib/constants";
 import { useMemo } from "react";
 
 function formatTotalTime(seconds: number): string {
@@ -24,12 +25,15 @@ export default function CompletePage() {
   const profiles = useSettingsStore((s) => s.settings.profiles);
 
   const routineType = session?.routineType ?? "morning";
-  const theme = ROUTINE_THEME[routineType];
   const messages = PRAISE_MESSAGES[routineType];
+  const praiseSeed = `${routineType}-${session?.players.map((p) => `${p.profileId}:${p.results.length}`).join("|") ?? "empty"}`;
 
   const praise = useMemo(
-    () => messages[Math.floor(Math.random() * messages.length)],
-    [messages]
+    () => {
+      const seed = praiseSeed.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      return messages[seed % messages.length];
+    },
+    [messages, praiseSeed]
   );
 
   const handleHome = () => {
@@ -47,10 +51,6 @@ export default function CompletePage() {
     );
   }
 
-  const totalStars = session.players.reduce(
-    (sum, p) => sum + p.results.reduce((s, r) => s + r.stars, 0),
-    0
-  );
   const totalSeconds = session.players.reduce(
     (sum, p) => sum + p.results.reduce((s, r) => s + r.elapsedSeconds, 0),
     0
@@ -63,28 +63,13 @@ export default function CompletePage() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-full gap-5 px-6 paper-bg"
+      className="relative flex h-full flex-col items-center gap-4 overflow-y-auto px-4 py-5 paper-bg"
       style={{ backgroundColor: COLORS.bgLight }}
     >
       <Confetti />
 
-      {/* 무지개 아치 배경 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[150px] opacity-20 pointer-events-none">
-        <svg viewBox="0 0 300 150" fill="none">
-          {["#E84393", "#FFAD42", "#00B894", "#54A0FF", "#6C5CE7"].map((color, i) => (
-            <path
-              key={i}
-              d={`M ${20 + i * 8} 150 A ${130 - i * 8} ${130 - i * 8} 0 0 1 ${280 - i * 8} 150`}
-              stroke={color}
-              strokeWidth="8"
-              fill="none"
-            />
-          ))}
-        </svg>
-      </div>
-
       {/* 캐릭터들이 점프! */}
-      <div className="flex gap-4">
+      <div className="flex gap-3 pt-1">
         {playerProfiles.map((profile, i) => (
           <motion.div
             key={profile.id}
@@ -93,7 +78,7 @@ export default function CompletePage() {
             transition={{ duration: 0.8, delay: i * 0.2 }}
             className="char-idle"
           >
-            <Character type={profile.characterType} expression="excited" size={90} />
+            <Character type={profile.characterType} expression="excited" size={64} />
           </motion.div>
         ))}
       </div>
@@ -103,10 +88,10 @@ export default function CompletePage() {
         initial={{ scale: 0, rotate: -5 }}
         animate={{ scale: 1, rotate: 2 }}
         transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.5 }}
-        className="relative px-6 py-3 rounded-2xl"
+        className="relative px-5 py-2 rounded-2xl"
         style={{ backgroundColor: COLORS.primary }}
       >
-        <p className="text-2xl text-white text-center">{praise}</p>
+        <p className="text-xl text-white text-center">{praise}</p>
         {/* 말풍선 꼬리 */}
         <div
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
@@ -119,51 +104,55 @@ export default function CompletePage() {
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="sticker-card p-5 text-center w-full max-w-xs"
-        style={{ transform: "rotate(-1deg)" }}
+        className="w-full max-w-4xl"
       >
-        <div className="flex flex-col gap-3">
-          {/* 별 */}
-          <div>
-            <p className="text-sm" style={{ color: COLORS.textSub }}>오늘의 별</p>
-            <div className="flex items-center justify-center gap-1 mt-1">
-              <svg width="28" height="28" viewBox="0 0 24 24">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={COLORS.secondary} stroke="#E09030" strokeWidth="1" />
-              </svg>
-              <span className="text-3xl" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>
-                {totalStars}
-              </span>
-            </div>
-          </div>
+        <AppleTreeReward
+          appleCount={1}
+          fallenCount={0}
+          sequence={["grow"]}
+          className="rounded-lg shadow-[0_10px_30px_rgba(108,92,231,0.12)]"
+        />
+      </motion.div>
 
-          {/* 시간 */}
-          <div style={{ borderTop: `2px solid #F0EBFF`, paddingTop: 12 }}>
-            <p className="text-sm" style={{ color: COLORS.textSub }}>총 시간</p>
-            <p className="text-xl" style={{ color: COLORS.textDark, fontFamily: "Fredoka" }}>
-              {formatTotalTime(totalSeconds)}
+      {/* 결과 요약 */}
+      <motion.div
+        initial={{ y: 16, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.15 }}
+        className="flex flex-wrap items-center justify-center gap-3 text-center"
+      >
+        <div>
+          <p className="text-xs" style={{ color: COLORS.textSub }}>오늘 열린 사과</p>
+          <p className="text-lg" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>
+            1개
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs" style={{ color: COLORS.textSub }}>총 시간</p>
+          <p className="text-lg" style={{ color: COLORS.textDark, fontFamily: "Fredoka" }}>
+            {formatTotalTime(totalSeconds)}
+          </p>
+        </div>
+
+        {streak > 0 && (
+          <div>
+            <p className="text-xs" style={{ color: COLORS.textSub }}>연속 기록</p>
+            <p className="text-lg" style={{ color: COLORS.mint }}>
+              {streak}일
             </p>
           </div>
-
-          {/* 연속 기록 */}
-          {streak > 0 && (
-            <div style={{ borderTop: `2px solid #F0EBFF`, paddingTop: 12 }}>
-              <p className="text-sm" style={{ color: COLORS.textSub }}>연속 기록</p>
-              <p className="text-xl" style={{ color: COLORS.accent }}>
-                {streak}일 연속!
-              </p>
-            </div>
-          )}
-        </div>
+        )}
       </motion.div>
 
       {/* 홈 버튼 */}
       <motion.button
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1.2 }}
+        transition={{ delay: 1.35 }}
         whileTap={{ scale: 0.9, rotate: -2 }}
         onClick={handleHome}
-        className="jelly-btn px-8 py-4 text-lg text-white"
+        className="jelly-btn px-8 py-3 text-lg text-white"
         style={{
           backgroundColor: COLORS.mint,
           "--btn-shadow": "#009B7D",

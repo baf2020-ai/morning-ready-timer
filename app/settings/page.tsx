@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { CHARACTERS, COLORS } from "@/lib/constants";
 import {
-  setFirebaseConfig, clearFirebaseConfig, getFirebaseConfigStored,
+  setFirebaseConfig, getFirebaseConfigStored,
   getFamilyCode, setFamilyCode, clearFamilyCode, generateFamilyCode,
   checkFamilyCodeExists, saveFamilyMeta, loadFromFamilyCode,
 } from "@/lib/firebase";
@@ -171,9 +171,9 @@ export default function SettingsPage() {
         <section className="sticker-card p-4" style={{ transform: "rotate(0deg)", borderRadius: "20px" }}>
           <h2 className="text-base mb-3" style={{ color: COLORS.primary }}>프로필</h2>
           {settings.profiles.map((profile) => (
-            <div key={profile.id} className="flex items-center gap-3 mb-4">
-              <div className="char-idle">
-                <Character type={profile.characterType} size={50} expression="happy" />
+            <div key={profile.id} className="flex items-start gap-3 mb-4">
+              <div className="char-idle flex-shrink-0">
+                <Character type={profile.characterType} size={118} expression="happy" variant="card" />
               </div>
               <div className="flex-1 space-y-2">
                 <input
@@ -183,19 +183,20 @@ export default function SettingsPage() {
                   style={{ borderColor: "#F0EBFF", fontFamily: "Jua" }}
                   placeholder="이름"
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {CHARACTERS.map((c) => (
                     <button
                       key={c.type}
                       onClick={() => updateProfile(profile.id, { characterType: c.type as CharacterType })}
-                      className="px-2 py-1 rounded-lg text-xs border-2 transition-colors"
+                      className="rounded-xl border-2 p-1 transition-colors"
                       style={{
                         borderColor: profile.characterType === c.type ? COLORS.primary : "#F0EBFF",
                         backgroundColor: profile.characterType === c.type ? "#F0EBFF" : "transparent",
                         color: profile.characterType === c.type ? COLORS.primary : COLORS.textSub,
                       }}
                     >
-                      {c.label}
+                      <Character type={c.type as CharacterType} size={68} variant="card" />
+                      <span className="sr-only">{c.label}</span>
                     </button>
                   ))}
                 </div>
@@ -269,7 +270,7 @@ export default function SettingsPage() {
                   color: selectedProfileId === profile.id ? COLORS.primary : COLORS.textSub,
                 }}
               >
-                <Character type={profile.characterType} size={16} expression="happy" />
+                <Character type={profile.characterType} size={22} expression="happy" variant="card" />
                 {profile.name}
               </button>
             ))}

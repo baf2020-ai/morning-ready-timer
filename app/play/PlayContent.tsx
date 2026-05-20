@@ -8,6 +8,8 @@ import PlayerPanel from "@/components/dual/PlayerPanel";
 import DualLayout from "@/components/dual/DualLayout";
 import { COLORS, ROUTINE_THEME } from "@/lib/constants";
 
+const COMPLETE_NAVIGATION_DELAY_MS = 2200;
+
 export default function PlayContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,7 +57,7 @@ export default function PlayContent() {
         sessions,
       });
 
-      setTimeout(() => router.push(`/complete?mode=${mode}`), 500);
+      setTimeout(() => router.push(`/complete?mode=${mode}`), COMPLETE_NAVIGATION_DELAY_MS);
     }
   }, [session, router, mode, addRecord]);
 

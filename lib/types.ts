@@ -57,8 +57,8 @@ export interface GameSession {
   isMuted: boolean;
 }
 
-/** 캐릭터 타입 */
-export type CharacterType = "bunny" | "bear" | "cat" | "penguin";
+/** 캐릭터 타입 — 별씨 프렌즈 5종 */
+export type CharacterType = "byeol" | "mori" | "pari" | "sosol" | "dali";
 
 /** 아이 프로필 (아이별 루틴 항목 포함) */
 export interface PlayerProfile {

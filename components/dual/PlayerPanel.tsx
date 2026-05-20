@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/stores/useGameStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import CountdownTimer from "@/components/timer/CountdownTimer";
-import TaskIcon from "@/components/svg/icons/TaskIcons";
 import ProgressSteps from "@/components/timer/ProgressSteps";
+import AppleTreeReward, { type AppleRewardKind } from "@/components/gamification/AppleTreeReward";
 import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
 import { soundManager } from "@/lib/sounds";
@@ -40,11 +40,9 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const startTimer = useGameStore((s) => s.startTimer);
   const pauseTimer = useGameStore((s) => s.pauseTimer);
   const goToTask = useGameStore((s) => s.goToTask);
-  const adjustTime = useGameStore((s) => s.adjustTime);
   const setDuration = useGameStore((s) => s.setDuration);
   const restartPlayer = useGameStore((s) => s.restartPlayer);
   const profiles = useSettingsStore((s) => s.settings.profiles);
-  void now;
 
   const [showTimeEditor, setShowTimeEditor] = useState(false);
   const [editMinutes, setEditMinutes] = useState(0);
@@ -86,11 +84,6 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     pauseTimer(playerIndex);
   }, [pauseTimer, playerIndex]);
 
-  const handleAdjustTime = useCallback((delta: number) => {
-    soundManager.play("tap");
-    adjustTime(playerIndex, delta);
-  }, [adjustTime, playerIndex]);
-
   const handleStepClick = useCallback((stepIndex: number) => {
     soundManager.play("tap");
     goToTask(playerIndex, stepIndex);
@@ -113,44 +106,55 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   };
 
   if (player.isCompleted) {
-    const totalStars = player.results.reduce((sum, r) => sum + r.stars, 0);
+    const rewardKind: AppleRewardKind = player.results.some((result) => result.stars < 3) ? "fall" : "grow";
+
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 p-4">
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <motion.div
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 12 }}
+            className="char-idle"
+          >
+            <Character type={profile.characterType} expression="excited" size={72} />
+          </motion.div>
+          <motion.p
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg"
+            style={{ color: COLORS.textDark }}
+          >
+            {profile.name} 완료!
+          </motion.p>
+        </div>
         <motion.div
-          initial={{ scale: 0, rotate: -10 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 200, damping: 12 }}
-          className="char-idle"
-        >
-          <Character type={profile.characterType} expression="excited" size={80} />
-        </motion.div>
-        <motion.p
-          initial={{ y: 10, opacity: 0 }}
+          key={`${player.profileId}-${player.results.length}-${rewardKind}`}
+          initial={{ y: 18, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-lg"
-          style={{ color: COLORS.textDark }}
+          transition={{ delay: 0.1 }}
+          className="w-full max-w-md"
         >
-          {profile.name} 완료!
-        </motion.p>
+          <AppleTreeReward
+            appleCount={rewardKind === "grow" ? 1 : 0}
+            fallenCount={rewardKind === "fall" ? 1 : 0}
+            sequence={[rewardKind]}
+            className="rounded-lg shadow-[0_8px_24px_rgba(108,92,231,0.12)]"
+          />
+        </motion.div>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ delay: 0.4, type: "spring" }}
-          className="flex items-center gap-1"
+          transition={{ delay: 0.75, type: "spring" }}
+          className="flex items-center justify-center rounded-full text-white"
+          style={{ width: 54, height: 54, backgroundColor: COLORS.mint, fontSize: 28 }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill={COLORS.secondary} stroke="#E09030" strokeWidth="1" />
-          </svg>
-          <span className="text-2xl" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>
-            {totalStars}
-          </span>
+          ✓
         </motion.div>
       </div>
     );
   }
-
-  const timerSize = compact ? 240 : 300;
 
   // 표시 중인 태스크가 실제 실행 중인지 판별
   const isDisplayedTaskRunning = player.isTimerRunning && player.activeRunningTaskIndex === player.currentTaskIndex;
@@ -163,17 +167,12 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     .slice(player.currentTaskIndex + 1)
     .reduce((sum, t) => sum + t.durationSeconds, 0);
   const totalRemaining = Math.max(remaining, 0) + remainingTasksDuration;
-  const etaDate = new Date(Date.now() + totalRemaining * 1000);
+  const etaDate = new Date(now + totalRemaining * 1000);
   const etaHH = etaDate.getHours().toString().padStart(2, "0");
   const etaMM = etaDate.getMinutes().toString().padStart(2, "0");
-  const totalMin = Math.ceil(totalRemaining / 60);
-
-  // 전체 진행률
-  const progressPercent = Math.round((player.results.length / tasks.length) * 100);
 
   return (
     <div className="relative flex flex-col h-full">
-
       {/* 1. 헤더: 아바타 + 이름 + 스텝 카운터 */}
       <div
         className="flex items-center gap-3 px-4 py-3"

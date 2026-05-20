@@ -43,19 +43,21 @@ export const STAR_THRESHOLDS = {
   TWO_STAR: 1.5,
 } as const;
 
-export const CHARACTERS: { type: CharacterType; label: string }[] = [
-  { type: "bunny",   label: "토끼" },
-  { type: "bear",    label: "곰돌이" },
-  { type: "cat",     label: "고양이" },
-  { type: "penguin", label: "펭귄" },
+// 별씨 프렌즈 캐릭터 목록
+export const CHARACTERS: { type: CharacterType; label: string; emoji: string }[] = [
+  { type: "byeol", label: "별이",  emoji: "⭐" },  // 토끼
+  { type: "mori",  label: "모리",  emoji: "🌿" },  // 곰
+  { type: "pari",  label: "파리",  emoji: "💧" },  // 개구리
+  { type: "sosol", label: "소솔",  emoji: "🌰" },  // 고슴도치
+  { type: "dali",  label: "달이",  emoji: "🌙" },  // 여우
 ];
 
 export const DEFAULT_PROFILES: PlayerProfile[] = [
-  { id: "player1", name: "플레이어 1", characterType: "bunny", tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
-  { id: "player2", name: "플레이어 2", characterType: "bear", tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
+  { id: "player1", name: "플레이어 1", characterType: "byeol", tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
+  { id: "player2", name: "플레이어 2", characterType: "mori",  tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
 ];
 
-// 새 팔레트: "놀이터" 테마
+// 새 팔레트: "별숲 마을" 테마
 export const COLORS = {
   // 메인
   primary: "#6C5CE7",      // 블루베리 보라
@@ -73,17 +75,19 @@ export const COLORS = {
   bgPurple: "#F8F0FF",
   bgCard: "#FFFFFF",
 
-  // 캐릭터
-  bunny: "#FF8FA3",
-  bear: "#8CC152",
-  cat: "#54A0FF",
-  penguin: "#A29BFE",
+  // 별씨 프렌즈 캐릭터 색상
+  byeol: "#FF8FA3",        // 별이(토끼) — 핑크
+  mori: "#C8A882",         // 모리(곰)   — 브라운
+  pari: "#A3D977",         // 파리(개구리) — 밝은 초록
+  sosol: "#C8B89A",        // 소솔(고슴도치) — 베이지
+  dali: "#E07850",         // 달이(여우) — 주황
 
-  // 캐릭터 스트로크
-  bunnyStroke: "#E84393",
-  bearStroke: "#6AB04C",
-  catStroke: "#2E86DE",
-  penguinStroke: "#6C5CE7",
+  // 별씨 프렌즈 스트로크
+  byeolStroke: "#E84393",
+  moriStroke:  "#A07850",
+  pariStroke:  "#5D9E3C",
+  sosolStroke: "#A07850",
+  daliStroke:  "#C05830",
 
   // 텍스트
   textDark: "#2B2040",

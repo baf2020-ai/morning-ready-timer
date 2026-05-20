@@ -8,7 +8,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
 import { SunIcon, MoonIcon } from "@/components/svg/icons/RoutineIcons";
-import type { RoutineType } from "@/lib/types";
+import type { RoutineType, CharacterType } from "@/lib/types";
 
 // 칭찬 스티커 종류 (별 개수별)
 const STICKER_BY_STARS: Record<number, { emoji: string; color: string; label: string }> = {
@@ -296,7 +296,7 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
 }
 
 /** 칭찬 스티커판 - 개인별 (캘린더) */
-function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string; name: string; characterType: "bunny" | "bear" | "cat" | "penguin" }; routineFilter: RoutineType }) {
+function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string; name: string; characterType: CharacterType }; routineFilter: RoutineType }) {
   const allRecords = useStatsStore((s) => s.records);
 
   const now = new Date();
