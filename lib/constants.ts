@@ -43,13 +43,13 @@ export const STAR_THRESHOLDS = {
   TWO_STAR: 1.5,
 } as const;
 
-// 별씨 프렌즈 캐릭터 목록
+// 캐릭터 목록
 export const CHARACTERS: { type: CharacterType; label: string; emoji: string }[] = [
-  { type: "byeol", label: "별이",  emoji: "⭐" },  // 토끼
-  { type: "mori",  label: "모리",  emoji: "🌿" },  // 곰
-  { type: "pari",  label: "파리",  emoji: "💧" },  // 개구리
-  { type: "sosol", label: "소솔",  emoji: "🌰" },  // 고슴도치
-  { type: "dali",  label: "달이",  emoji: "🌙" },  // 여우
+  { type: "byeol", label: "토토",    emoji: "⭐" },  // 토끼
+  { type: "mori",  label: "도도",    emoji: "🌿" },  // 곰
+  { type: "pari",  label: "초롱이",  emoji: "💧" },  // 개구리
+  { type: "sosol", label: "뾰족이",  emoji: "🌰" },  // 고슴도치
+  { type: "dali",  label: "귀요미",  emoji: "🌙" },  // 여우
 ];
 
 export const DEFAULT_PROFILES: PlayerProfile[] = [
@@ -75,12 +75,12 @@ export const COLORS = {
   bgPurple: "#F8F0FF",
   bgCard: "#FFFFFF",
 
-  // 별씨 프렌즈 캐릭터 색상
-  byeol: "#FF8FA3",        // 별이(토끼) — 핑크
-  mori: "#C8A882",         // 모리(곰)   — 브라운
-  pari: "#A3D977",         // 파리(개구리) — 밝은 초록
-  sosol: "#C8B89A",        // 소솔(고슴도치) — 베이지
-  dali: "#E07850",         // 달이(여우) — 주황
+  // 캐릭터 색상
+  byeol: "#FF8FA3",        // 토토(토끼) — 핑크
+  mori: "#C8A882",         // 도도(곰)   — 브라운
+  pari: "#A3D977",         // 초롱이(개구리) — 밝은 초록
+  sosol: "#C8B89A",        // 뾰족이(고슴도치) — 베이지
+  dali: "#E07850",         // 귀요미(여우) — 주황
 
   // 별씨 프렌즈 스트로크
   byeolStroke: "#E84393",

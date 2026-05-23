@@ -21,6 +21,20 @@ export default function ProgressSteps({ tasks, currentStep, completedCount, comp
         const done = i < (completedCount ?? currentStep);
         const active = i === currentStep;
         const isViewing = viewingStep === i;
+        const isNext = i === currentStep + 1;
+        const showLabel = !compact && (done || active || isViewing || isNext);
+        const labelColor = isViewing
+          ? COLORS.secondary
+          : active
+            ? COLORS.primary
+            : done
+              ? COLORS.mint
+              : COLORS.textSub;
+        const labelBg = active || isViewing
+          ? "#F0EBFF"
+          : done
+            ? "#E8FFF8"
+            : "#F7F3FF";
 
         return (
           <div key={task.id} className="flex items-center">
@@ -31,7 +45,7 @@ export default function ProgressSteps({ tasks, currentStep, completedCount, comp
               whileTap={onStepClick ? { scale: 0.9 } : undefined}
               className="flex flex-col items-center"
               style={{
-                opacity: done && !isViewing ? 0.5 : 1,
+                opacity: done && !isViewing ? 0.82 : 1,
                 cursor: onStepClick ? "pointer" : "default",
               }}
               onClick={() => onStepClick?.(i)}
@@ -59,9 +73,12 @@ export default function ProgressSteps({ tasks, currentStep, completedCount, comp
                   <TaskIcon icon={task.icon} size={compact ? 20 : 24} />
                 )}
               </div>
-              {/* 라벨 (현재 또는 보고 있는 스텝 표시) */}
-              {((active && viewingStep === undefined) || isViewing) && !compact && (
-                <span className="text-[10px] mt-0.5 whitespace-nowrap" style={{ color: isViewing ? COLORS.secondary : COLORS.primary }}>
+              {/* 라벨: 완료된 단계도 다음 단계로 넘어간 뒤 계속 보이게 유지 */}
+              {showLabel && (
+                <span
+                  className="mt-1 max-w-[68px] rounded-md px-1 py-0.5 text-center text-[9px] leading-tight"
+                  style={{ color: labelColor, backgroundColor: labelBg }}
+                >
                   {task.label}
                 </span>
               )}

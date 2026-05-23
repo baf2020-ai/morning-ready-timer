@@ -32,6 +32,7 @@ const ICON_OPTIONS: { value: TaskIconType; label: string }[] = [
   { value: "clothes", label: "옷" },
   { value: "backpack", label: "가방" },
   { value: "shoes", label: "신발" },
+  { value: "custom", label: "직접 추가" },
 ];
 
 export default function SettingsPage() {
@@ -171,32 +172,38 @@ export default function SettingsPage() {
         <section className="sticker-card p-4" style={{ transform: "rotate(0deg)", borderRadius: "20px" }}>
           <h2 className="text-base mb-3" style={{ color: COLORS.primary }}>프로필</h2>
           {settings.profiles.map((profile) => (
-            <div key={profile.id} className="flex items-start gap-3 mb-4">
-              <div className="char-idle flex-shrink-0">
-                <Character type={profile.characterType} size={118} expression="happy" variant="card" />
-              </div>
-              <div className="flex-1 space-y-2">
+            <div
+              key={profile.id}
+              className="mb-5 border-b-2 pb-5 last:mb-0 last:border-b-0 last:pb-0"
+              style={{ borderColor: "#F0EBFF" }}
+            >
+              <div className="mb-3 flex items-center gap-3">
+                <div className="char-idle flex h-24 w-24 flex-shrink-0 items-center justify-center">
+                  <Character type={profile.characterType} size={104} expression="happy" variant="cutout" />
+                </div>
                 <input
                   value={profile.name}
                   onChange={(e) => updateProfile(profile.id, { name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border-2 text-sm outline-none"
+                  className="min-w-0 flex-1 px-3 py-2 rounded-lg border-2 text-lg outline-none"
                   style={{ borderColor: "#F0EBFF", fontFamily: "Jua" }}
                   placeholder="이름"
                 />
-                <div className="flex flex-wrap gap-2">
+              </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-5 gap-2">
                   {CHARACTERS.map((c) => (
                     <button
                       key={c.type}
                       onClick={() => updateProfile(profile.id, { characterType: c.type as CharacterType })}
-                      className="rounded-xl border-2 p-1 transition-colors"
+                      className="flex min-h-[92px] flex-col items-center justify-between rounded-xl border-2 px-1.5 py-2 transition-colors"
                       style={{
                         borderColor: profile.characterType === c.type ? COLORS.primary : "#F0EBFF",
                         backgroundColor: profile.characterType === c.type ? "#F0EBFF" : "transparent",
                         color: profile.characterType === c.type ? COLORS.primary : COLORS.textSub,
                       }}
                     >
-                      <Character type={c.type as CharacterType} size={68} variant="card" />
-                      <span className="sr-only">{c.label}</span>
+                      <Character type={c.type as CharacterType} size={56} variant="cutout" />
+                      <span className="text-xs">{c.label}</span>
                     </button>
                   ))}
                 </div>
@@ -270,7 +277,7 @@ export default function SettingsPage() {
                   color: selectedProfileId === profile.id ? COLORS.primary : COLORS.textSub,
                 }}
               >
-                <Character type={profile.characterType} size={22} expression="happy" variant="card" />
+                <Character type={profile.characterType} size={26} expression="happy" variant="cutout" />
                 {profile.name}
               </button>
             ))}
@@ -307,16 +314,27 @@ export default function SettingsPage() {
               className="jelly-btn px-3 py-1 text-xs text-white"
               style={{ backgroundColor: COLORS.mint, "--btn-shadow": "#009B7D" } as React.CSSProperties}
             >
-              + 추가
+              + 직접 추가
             </button>
           </div>
 
           {showAddTask && (
-            <div className="mb-4 p-3 rounded-xl border-2 border-dashed space-y-2" style={{ borderColor: COLORS.mint, backgroundColor: "#F0FFF8" }}>
+            <div className="mb-4 p-3 rounded-xl border-2 border-dashed space-y-3" style={{ borderColor: COLORS.mint, backgroundColor: "#F0FFF8" }}>
+              <div className="flex items-center gap-2">
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-sm text-white"
+                  style={{ backgroundColor: COLORS.mint }}
+                >
+                  +
+                </span>
+                <span className="text-sm" style={{ color: COLORS.textDark }}>
+                  직접 추가
+                </span>
+              </div>
               <input
                 value={newTaskLabel}
                 onChange={(e) => setNewTaskLabel(e.target.value)}
-                placeholder="항목 이름 (예: 머리 빗기)"
+                placeholder="준비 이름 (예: 머리 빗기)"
                 className="w-full px-3 py-2 rounded-lg border-2 text-sm outline-none"
                 style={{ borderColor: "#F0EBFF" }}
               />
@@ -357,7 +375,7 @@ export default function SettingsPage() {
                   className="jelly-btn px-4 py-1.5 text-xs text-white disabled:opacity-50"
                   style={{ backgroundColor: COLORS.mint, "--btn-shadow": "#009B7D" } as React.CSSProperties}
                 >
-                  추가
+                  직접 추가
                 </button>
               </div>
             </div>

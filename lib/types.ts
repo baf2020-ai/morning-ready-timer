@@ -8,7 +8,8 @@ export type TaskIconType =
   | "brush"
   | "clothes"
   | "backpack"
-  | "shoes";
+  | "shoes"
+  | "custom";
 
 /** 준비 항목 정의 */
 export interface TaskItem {

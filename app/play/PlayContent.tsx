@@ -7,6 +7,7 @@ import { useStatsStore } from "@/stores/useStatsStore";
 import PlayerPanel from "@/components/dual/PlayerPanel";
 import DualLayout from "@/components/dual/DualLayout";
 import { COLORS, ROUTINE_THEME } from "@/lib/constants";
+import { didPlayerMissDeadline, didSessionMissDeadline, getTasksForPlayer } from "@/lib/sessionOutcome";
 
 const COMPLETE_NAVIGATION_DELAY_MS = 2200;
 
@@ -40,20 +41,27 @@ export default function PlayContent() {
     if (allDone) {
       navigatedRef.current = true;
       const today = new Date().toISOString().split("T")[0];
-      const sessions = session.players.map((p) => {
+      const sessions = session.players.map((p, playerIndex) => {
+        const tasks = getTasksForPlayer(session, playerIndex);
         const stars = p.results.reduce((sum, r) => sum + r.stars, 0);
         const seconds = p.results.reduce((sum, r) => sum + r.elapsedSeconds, 0);
-        return { profileId: p.profileId, stars, seconds, isAllClear: true };
+        return {
+          profileId: p.profileId,
+          stars,
+          seconds,
+          isAllClear: !didPlayerMissDeadline(p, tasks),
+        };
       });
       const totalStars = sessions.reduce((sum, s) => sum + s.stars, 0);
       const totalSeconds = sessions.reduce((sum, s) => sum + s.seconds, 0);
+      const isAllClear = !didSessionMissDeadline(session);
 
       addRecord({
         date: today,
         routineType: session.routineType,
         totalStars,
         totalSeconds,
-        isAllClear: true,
+        isAllClear,
         sessions,
       });
 

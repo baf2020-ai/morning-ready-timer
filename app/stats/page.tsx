@@ -8,24 +8,20 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
 import { SunIcon, MoonIcon } from "@/components/svg/icons/RoutineIcons";
-import type { RoutineType, CharacterType } from "@/lib/types";
-
-// 칭찬 스티커 종류 (별 개수별)
-const STICKER_BY_STARS: Record<number, { emoji: string; color: string; label: string }> = {
-  0: { emoji: "", color: "#E8E0F0", label: "" },
-  1: { emoji: "👍", color: "#FDCB6E", label: "잘했어" },
-  2: { emoji: "🌟", color: "#FFAD42", label: "멋져" },
-  3: { emoji: "🏆", color: "#E84393", label: "최고" },
-};
-
-function getSticker(stars: number) {
-  if (stars >= 15) return STICKER_BY_STARS[3];
-  if (stars >= 10) return STICKER_BY_STARS[2];
-  if (stars > 0) return STICKER_BY_STARS[1];
-  return STICKER_BY_STARS[0];
-}
+import type { RoutineType, CharacterType, DailyRecord } from "@/lib/types";
 
 const WEEKDAY_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
+const MAX_VISIBLE_APPLES = 8;
+const APPLE_POSITIONS = [
+  { x: 74, y: 38 },
+  { x: 104, y: 48 },
+  { x: 48, y: 58 },
+  { x: 88, y: 70 },
+  { x: 122, y: 78 },
+  { x: 62, y: 92 },
+  { x: 108, y: 103 },
+  { x: 82, y: 118 },
+];
 
 /** 월간 캘린더 날짜 배열 생성 (앞뒤 빈칸 포함) */
 function getCalendarDays(year: number, month: number) {
@@ -59,7 +55,119 @@ function formatTime(seconds: number): string {
   return s > 0 ? `${m}분 ${s}초` : `${m}분`;
 }
 
+function getRecordAppleCount(record: DailyRecord): number {
+  return record.sessions.filter((session) => session.isAllClear).length;
+}
+
+function getPlayerAppleCount(record: DailyRecord, profileId: string): number {
+  return record.sessions.filter((session) => session.profileId === profileId && session.isAllClear).length;
+}
+
 const MONTH_NAMES = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+function MiniAppleTree({ appleCount }: { appleCount: number }) {
+  const visibleApples = Math.min(appleCount, MAX_VISIBLE_APPLES);
+  const extraApples = Math.max(appleCount - MAX_VISIBLE_APPLES, 0);
+
+  return (
+    <div
+      className="relative flex h-28 w-32 flex-shrink-0 items-center justify-center"
+      aria-label={`열린 사과 ${appleCount}개`}
+    >
+      <svg viewBox="0 0 160 150" className="h-full w-full" role="img" aria-hidden="true">
+        <ellipse cx="82" cy="132" rx="52" ry="9" fill="#DDECC2" opacity="0.9" />
+        <path
+          d="M74 70 C70 92 66 111 57 132 L104 132 C94 110 90 90 86 70 Z"
+          fill="#B46D3D"
+        />
+        <path
+          d="M79 78 C61 83 45 88 34 99"
+          fill="none"
+          stroke="#8C542F"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+        <path
+          d="M83 76 C101 79 117 85 129 97"
+          fill="none"
+          stroke="#8C542F"
+          strokeWidth="7"
+          strokeLinecap="round"
+        />
+        <circle cx="52" cy="61" r="34" fill="#8ECF74" />
+        <circle cx="85" cy="43" r="40" fill="#A8DC70" />
+        <circle cx="115" cy="65" r="34" fill="#7DBD63" />
+        <circle cx="77" cy="78" r="42" fill="#79C85F" />
+        <circle cx="106" cy="92" r="36" fill="#6FB653" />
+        {APPLE_POSITIONS.slice(0, visibleApples).map((pos, index) => (
+          <g key={`${pos.x}-${pos.y}`}>
+            <circle cx={pos.x} cy={pos.y} r="7" fill="#F45D4F" />
+            <circle cx={pos.x - 2} cy={pos.y - 2} r="2" fill="#FFD2C6" opacity="0.8" />
+            <path
+              d={`M${pos.x + 1} ${pos.y - 8} C${pos.x + 5} ${pos.y - 13} ${pos.x + 11} ${pos.y - 12} ${pos.x + 13} ${pos.y - 8}`}
+              fill="none"
+              stroke={index % 2 === 0 ? "#3E8E48" : "#5AA35C"}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </g>
+        ))}
+        {extraApples > 0 && (
+          <g>
+            <circle cx="127" cy="112" r="17" fill="#FFF7DF" stroke="#FDCB6E" strokeWidth="3" />
+            <text x="127" y="117" textAnchor="middle" fontSize="14" fontWeight="700" fill="#E85D4F">
+              +{extraApples}
+            </text>
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+function AppleTreeSummaryCard({
+  title,
+  subtitle,
+  appleCount,
+}: {
+  title: string;
+  subtitle: string;
+  appleCount: number;
+}) {
+  return (
+    <motion.div
+      initial={{ y: 14, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 220, damping: 18 }}
+      className="flex items-center gap-3 rounded-3xl p-4"
+      style={{
+        backgroundColor: "#FFFDF5",
+        border: "3px solid #FDCB6E",
+        boxShadow: "0 4px 0 #E5B85C",
+      }}
+    >
+      <MiniAppleTree appleCount={appleCount} />
+      <div className="min-w-0 flex-1">
+        <p className="text-base" style={{ color: COLORS.textDark }}>
+          {title}
+        </p>
+        <p className="text-xs mt-1" style={{ color: COLORS.textSub }}>
+          {subtitle}
+        </p>
+        <div
+          className="mt-3 inline-flex items-baseline gap-1 rounded-full px-4 py-2"
+          style={{ backgroundColor: "#FFEDE8", color: "#E85D4F" }}
+        >
+          <span className="text-xs">열린 사과</span>
+          <span className="text-2xl font-bold" style={{ fontFamily: "Fredoka" }}>
+            {appleCount}
+          </span>
+          <span className="text-sm">개</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 /** 월 네비게이션 헤더 */
 function MonthNav({ year, month, onChange }: { year: number; month: number; onChange: (y: number, m: number) => void }) {
@@ -105,8 +213,8 @@ function MonthNav({ year, month, onChange }: { year: number; month: number; onCh
   );
 }
 
-/** 칭찬 스티커판 - 전체 (캘린더) */
-function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType }) {
+/** 사과나무 통계 - 전체 */
+function AppleBoardOverview({ routineFilter }: { routineFilter: RoutineType }) {
   const allRecords = useStatsStore((s) => s.records);
   const streak = useStatsStore((s) => s.getStreak());
 
@@ -120,8 +228,9 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
   // 이번 달 통계
   const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
   const monthRecords = records.filter((r) => r.date.startsWith(monthPrefix));
-  const monthStars = monthRecords.reduce((sum, r) => sum + r.totalStars, 0);
   const monthCompleted = monthRecords.filter((r) => r.isAllClear).length;
+  const monthApples = monthRecords.reduce((sum, r) => sum + getRecordAppleCount(r), 0);
+  const appleRecords = monthRecords.filter((record) => getRecordAppleCount(record) > 0);
 
   return (
     <div className="space-y-4">
@@ -144,6 +253,12 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
           </div>
         </motion.div>
       )}
+
+      <AppleTreeSummaryCard
+        title="우리 집 사과나무"
+        subtitle="우리 집 사과나무가 자라고 있어요"
+        appleCount={monthApples}
+      />
 
       {/* 캘린더 */}
       <div
@@ -169,8 +284,8 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
             if (!cell) return <div key={`empty-${i}`} />;
 
             const record = records.find((r) => r.date === cell.dateStr);
-            const sticker = getSticker(record?.totalStars ?? 0);
-            const hasRecord = !!record;
+            const appleCount = record ? getRecordAppleCount(record) : 0;
+            const hasApple = appleCount > 0;
 
             return (
               <motion.div
@@ -185,24 +300,22 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
                   style={{
                     width: 36,
                     height: 36,
-                    backgroundColor: hasRecord ? sticker.color : cell.isToday ? "#F0EBFF" : "transparent",
-                    border: cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
-                    boxShadow: hasRecord ? `0 2px 0 rgba(0,0,0,0.1)` : "none",
+                    backgroundColor: hasApple ? "#FFEDE8" : cell.isToday ? "#F0EBFF" : "transparent",
+                    border: hasApple ? "2px solid #F4A79B" : cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
+                    boxShadow: hasApple ? "0 2px 0 rgba(232,93,79,0.18)" : "none",
                   }}
                 >
-                  {hasRecord ? (
-                    <span className="text-lg">{sticker.emoji}</span>
+                  {hasApple ? (
+                    <span className="flex items-center gap-0.5 leading-none" style={{ color: "#E85D4F" }}>
+                      <span className="text-[15px]">🍎</span>
+                      <span className="text-[10px] font-bold" style={{ fontFamily: "Fredoka" }}>{appleCount}</span>
+                    </span>
                   ) : (
                     <span className="text-[11px]" style={{ color: cell.isToday ? COLORS.primary : "#C0B8D0" }}>
                       {cell.day}
                     </span>
                   )}
                 </div>
-                {hasRecord && (
-                  <span className="text-[8px]" style={{ color: COLORS.textSub, fontFamily: "Fredoka" }}>
-                    ★{record!.totalStars}
-                  </span>
-                )}
               </motion.div>
             );
           })}
@@ -210,10 +323,10 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
       </div>
 
       {/* 월간 요약 */}
-      <div className="flex items-center justify-center gap-6">
+      <div className="grid grid-cols-3 gap-2">
         <div className="flex flex-col items-center">
-          <span className="text-lg font-bold" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>{monthStars}</span>
-          <span className="text-[10px]" style={{ color: COLORS.textSub }}>별 모음</span>
+          <span className="text-lg font-bold" style={{ color: "#E85D4F", fontFamily: "Fredoka" }}>{monthApples}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>열린 사과</span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-lg font-bold" style={{ color: COLORS.mint, fontFamily: "Fredoka" }}>{monthCompleted}</span>
@@ -225,23 +338,10 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
         </div>
       </div>
 
-      {/* 스티커 범례 */}
-      <div className="flex items-center justify-center gap-4">
-        {[1, 2, 3].map((level) => {
-          const s = STICKER_BY_STARS[level];
-          return (
-            <div key={level} className="flex items-center gap-1">
-              <span className="text-sm">{s.emoji}</span>
-              <span className="text-[10px]" style={{ color: COLORS.textSub }}>{s.label}</span>
-            </div>
-          );
-        })}
-      </div>
-
       {/* 이번 달 기록 상세 */}
       <div className="space-y-2">
-        {monthRecords.slice().reverse().map((record) => {
-          const sticker = getSticker(record.totalStars);
+        {appleRecords.slice().reverse().map((record) => {
+          const appleCount = getRecordAppleCount(record);
           const d = new Date(record.date + "T00:00:00");
           return (
             <motion.div
@@ -255,39 +355,37 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
                 className="flex items-center justify-center rounded-xl"
                 style={{
                   width: 44, height: 44,
-                  backgroundColor: sticker.color,
-                  boxShadow: "0 2px 0 rgba(0,0,0,0.08)",
+                  backgroundColor: "#FFEDE8",
+                  boxShadow: "0 2px 0 rgba(232,93,79,0.15)",
                   transform: "rotate(-3deg)",
                 }}
               >
-                <span className="text-2xl">{sticker.emoji}</span>
+                <span className="text-2xl">🍎</span>
               </div>
               <div className="flex-1">
                 <p className="text-sm" style={{ color: COLORS.textDark }}>
                   {d.getDate()}일 ({WEEKDAY_SHORT[d.getDay()]})
                 </p>
                 <p className="text-xs" style={{ color: COLORS.textSub }}>
-                  {formatTime(record.totalSeconds)} · {sticker.label}
+                  {formatTime(record.totalSeconds)} · 열린 사과 {appleCount}개
                 </p>
               </div>
-              {record.isAllClear && (
-                <span
-                  className="text-[10px] px-2 py-1 rounded-full text-white"
-                  style={{ backgroundColor: COLORS.mint }}
-                >
-                  완료
-                </span>
-              )}
+              <span
+                className="text-[10px] px-2 py-1 rounded-full text-white"
+                style={{ backgroundColor: "#E85D4F" }}
+              >
+                🍎 {appleCount}
+              </span>
             </motion.div>
           );
         })}
       </div>
 
-      {monthRecords.length === 0 && (
+      {monthApples === 0 && (
         <div className="text-center py-6">
-          <p className="text-3xl mb-2">📋</p>
+          <p className="text-3xl mb-2">🍎</p>
           <p className="text-sm" style={{ color: COLORS.textSub }}>
-            이번 달 스티커가 없어요!<br />{routineFilter === "morning" ? "등원" : "잠자리"} 준비를 완료하면 스티커를 받을 수 있어요.
+            이번 달 열린 사과가 없어요!<br />{routineFilter === "morning" ? "등원" : "잠자리"} 준비를 시간 안에 완료하면 사과를 받을 수 있어요.
           </p>
         </div>
       )}
@@ -295,8 +393,8 @@ function StickerBoardOverview({ routineFilter }: { routineFilter: RoutineType })
   );
 }
 
-/** 칭찬 스티커판 - 개인별 (캘린더) */
-function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string; name: string; characterType: CharacterType }; routineFilter: RoutineType }) {
+/** 사과나무 통계 - 개인별 */
+function PlayerAppleBoard({ profile, routineFilter }: { profile: { id: string; name: string; characterType: CharacterType }; routineFilter: RoutineType }) {
   const allRecords = useStatsStore((s) => s.records);
 
   const now = new Date();
@@ -313,18 +411,27 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
   const monthSessions = monthRecords.flatMap((r) =>
     r.sessions.filter((s) => s.profileId === profile.id)
   );
-  const monthStars = monthSessions.reduce((sum, s) => sum + s.stars, 0);
   const monthCompleted = monthSessions.filter((s) => s.isAllClear).length;
+  const monthApples = monthSessions.filter((s) => s.isAllClear).length;
+  const appleSessionRecords = monthRecords.filter((record) =>
+    record.sessions.some((session) => session.profileId === profile.id && session.isAllClear)
+  );
 
   return (
     <div className="space-y-4">
       {/* 캐릭터 프로필 */}
       <div className="flex flex-col items-center gap-1">
         <div className="char-idle">
-          <Character type={profile.characterType} expression="happy" size={70} />
+          <Character type={profile.characterType} expression="happy" size={70} variant="cutout" />
         </div>
         <p className="text-lg" style={{ color: COLORS.primary }}>{profile.name}</p>
       </div>
+
+      <AppleTreeSummaryCard
+        title={`${profile.name}의 사과나무`}
+        subtitle={`${profile.name}의 사과나무가 자라고 있어요`}
+        appleCount={monthApples}
+      />
 
       {/* 캘린더 */}
       <div
@@ -348,9 +455,8 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
             if (!cell) return <div key={`empty-${i}`} />;
 
             const record = records.find((r) => r.date === cell.dateStr);
-            const session = record?.sessions.find((s) => s.profileId === profile.id);
-            const sticker = getSticker(session?.stars ?? 0);
-            const hasSession = !!session;
+            const appleCount = record ? getPlayerAppleCount(record, profile.id) : 0;
+            const hasApple = appleCount > 0;
 
             return (
               <motion.div
@@ -365,24 +471,24 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
                   style={{
                     width: 36,
                     height: 36,
-                    backgroundColor: hasSession ? sticker.color : cell.isToday ? "#F0EBFF" : "transparent",
-                    border: cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
-                    boxShadow: hasSession ? `0 2px 0 rgba(0,0,0,0.1)` : "none",
+                    backgroundColor: hasApple ? "#FFEDE8" : cell.isToday ? "#F0EBFF" : "transparent",
+                    border: hasApple ? "2px solid #F4A79B" : cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
+                    boxShadow: hasApple ? "0 2px 0 rgba(232,93,79,0.18)" : "none",
                   }}
                 >
-                  {hasSession ? (
-                    <span className="text-lg">{sticker.emoji}</span>
+                  {hasApple ? (
+                    <span className="flex items-center gap-0.5 leading-none" style={{ color: "#E85D4F" }}>
+                      <span className="text-[15px]">🍎</span>
+                      {appleCount > 1 && (
+                        <span className="text-[10px] font-bold" style={{ fontFamily: "Fredoka" }}>{appleCount}</span>
+                      )}
+                    </span>
                   ) : (
                     <span className="text-[11px]" style={{ color: cell.isToday ? COLORS.primary : "#C0B8D0" }}>
                       {cell.day}
                     </span>
                   )}
                 </div>
-                {hasSession && (
-                  <span className="text-[8px]" style={{ color: COLORS.textSub, fontFamily: "Fredoka" }}>
-                    ★{session!.stars}
-                  </span>
-                )}
               </motion.div>
             );
           })}
@@ -390,10 +496,10 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
       </div>
 
       {/* 월간 요약 */}
-      <div className="flex items-center justify-center gap-6">
+      <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col items-center">
-          <span className="text-lg font-bold" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>{monthStars}</span>
-          <span className="text-[10px]" style={{ color: COLORS.textSub }}>별 모음</span>
+          <span className="text-lg font-bold" style={{ color: "#E85D4F", fontFamily: "Fredoka" }}>{monthApples}</span>
+          <span className="text-[10px]" style={{ color: COLORS.textSub }}>열린 사과</span>
         </div>
         <div className="flex flex-col items-center">
           <span className="text-lg font-bold" style={{ color: COLORS.mint, fontFamily: "Fredoka" }}>{monthCompleted}</span>
@@ -403,9 +509,9 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
 
       {/* 일별 상세 */}
       <div className="space-y-2">
-        {monthRecords.filter((r) => r.sessions.some((s) => s.profileId === profile.id)).reverse().map((record) => {
-          const session = record.sessions.find((s) => s.profileId === profile.id)!;
-          const sticker = getSticker(session.stars);
+        {appleSessionRecords.slice().reverse().map((record) => {
+          const session = record.sessions.find((s) => s.profileId === profile.id && s.isAllClear)!;
+          const appleCount = getPlayerAppleCount(record, profile.id);
           const d = new Date(record.date + "T00:00:00");
           return (
             <motion.div
@@ -419,38 +525,36 @@ function PlayerStickerBoard({ profile, routineFilter }: { profile: { id: string;
                 className="flex items-center justify-center rounded-xl"
                 style={{
                   width: 44, height: 44,
-                  backgroundColor: sticker.color,
-                  boxShadow: "0 2px 0 rgba(0,0,0,0.08)",
+                  backgroundColor: "#FFEDE8",
+                  boxShadow: "0 2px 0 rgba(232,93,79,0.15)",
                   transform: "rotate(-3deg)",
                 }}
               >
-                <span className="text-2xl">{sticker.emoji}</span>
+                <span className="text-2xl">🍎</span>
               </div>
               <div className="flex-1">
                 <p className="text-sm" style={{ color: COLORS.textDark }}>
                   {d.getDate()}일 ({WEEKDAY_SHORT[d.getDay()]})
                 </p>
                 <p className="text-xs" style={{ color: COLORS.textSub }}>
-                  {formatTime(session.seconds)} · {sticker.label}
+                  {formatTime(session.seconds)} · 열린 사과 {appleCount}개
                 </p>
               </div>
-              {session.isAllClear && (
-                <span
-                  className="text-[10px] px-2 py-1 rounded-full text-white"
-                  style={{ backgroundColor: COLORS.mint }}
-                >
-                  완료
-                </span>
-              )}
+              <span
+                className="text-[10px] px-2 py-1 rounded-full text-white"
+                style={{ backgroundColor: "#E85D4F" }}
+              >
+                🍎 {appleCount}
+              </span>
             </motion.div>
           );
         })}
       </div>
 
-      {monthSessions.length === 0 && (
+      {monthApples === 0 && (
         <div className="text-center py-6">
           <p className="text-sm" style={{ color: COLORS.textSub }}>
-            {profile.name}의 이번 달 스티커가 없어요!
+            {profile.name}의 이번 달 열린 사과가 없어요!
           </p>
         </div>
       )}
@@ -483,7 +587,7 @@ export default function StatsPage() {
         >
           ← 뒤로
         </button>
-        <h1 className="text-lg" style={{ color: COLORS.primary }}>칭찬 스티커판</h1>
+        <h1 className="text-lg" style={{ color: COLORS.primary }}>사과나무 통계</h1>
         <div className="w-10" />
       </div>
 
@@ -530,9 +634,9 @@ export default function StatsPage() {
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {activeTab === "overview" ? (
-          <StickerBoardOverview routineFilter={routineFilter} />
+          <AppleBoardOverview routineFilter={routineFilter} />
         ) : (
-          <PlayerStickerBoard
+          <PlayerAppleBoard
             profile={profiles.find((p) => p.id === activeTab) ?? profiles[0]}
             routineFilter={routineFilter}
           />

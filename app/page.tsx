@@ -99,15 +99,26 @@ export default function HomePage() {
               transition={{ delay: 0.2 + i * 0.1, type: "spring", stiffness: 300, damping: 15 }}
               whileTap={{ scale: 0.9, rotate: -2 }}
               onClick={() => handleSoloStart(profile)}
-              className="sticker-card flex flex-col items-center gap-2 p-4"
-              style={{ minWidth: "120px", transform: `rotate(${i % 2 === 0 ? -1 : 1}deg)` }}
+              className="sticker-card flex flex-col items-center gap-2 overflow-visible p-4"
+              style={{ minWidth: "128px", transform: `rotate(${i % 2 === 0 ? -1 : 1}deg)` }}
             >
-              <div className="char-idle">
-                <Character
-                  type={profile.characterType}
-                  expression={isMorning ? "happy" : "sleeping"}
-                  size={90}
+              <div className="relative flex h-[112px] w-[112px] items-end justify-center overflow-visible">
+                <div
+                  className="absolute bottom-2 h-12 w-24 rounded-full"
+                  style={{
+                    background: isMorning
+                      ? "radial-gradient(ellipse at center, rgba(255,173,66,0.22), rgba(255,255,255,0))"
+                      : "radial-gradient(ellipse at center, rgba(124,108,219,0.2), rgba(255,255,255,0))",
+                  }}
                 />
+                <div className="char-idle relative z-10 drop-shadow-[0_6px_8px_rgba(43,32,64,0.14)]">
+                  <Character
+                    type={profile.characterType}
+                    expression={isMorning ? "happy" : "sleeping"}
+                    size={112}
+                    variant="cutout"
+                  />
+                </div>
               </div>
               <div
                 className="rounded-full"
@@ -137,18 +148,39 @@ export default function HomePage() {
         transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 15 }}
         whileTap={{ scale: 0.9, rotate: 1 }}
         onClick={handleDualStart}
-        className="flex items-center gap-3 px-5 py-3 rounded-full"
+        className="flex items-center gap-4 overflow-visible rounded-full px-6 py-3.5"
         style={{
           backgroundColor: isMorning ? COLORS.primary : "#7C6CDB",
-          boxShadow: `0 4px 0 ${isMorning ? "#5041C0" : "#4A3BA0"}, 0 6px 16px rgba(108,92,231,0.25)`,
+          minHeight: 68,
+          boxShadow: `0 5px 0 ${isMorning ? "#5041C0" : "#4A3BA0"}, 0 10px 20px rgba(108,92,231,0.26)`,
         }}
       >
-        <div className="flex -space-x-3">
-          {profiles.map((profile) => (
-            <Character key={profile.id} type={profile.characterType} expression="excited" size={38} />
+        <div className="flex items-end -space-x-2.5">
+          {profiles.map((profile, i) => (
+            <motion.span
+              key={profile.id}
+              initial={{ scale: 0.8, y: 8, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              transition={{ delay: 0.62 + i * 0.08, type: "spring", stiffness: 280, damping: 16 }}
+              className="relative flex h-12 w-12 flex-shrink-0 items-end justify-center overflow-visible rounded-full border-2 border-white/80 bg-white/95"
+              style={{
+                zIndex: profiles.length - i,
+                boxShadow: "0 3px 0 rgba(255,255,255,0.35), 0 5px 10px rgba(43,32,64,0.16)",
+              }}
+            >
+              <Character
+                type={profile.characterType}
+                expression="excited"
+                size={54}
+                variant="cutout"
+                className="-mb-1 drop-shadow-[0_3px_4px_rgba(43,32,64,0.16)]"
+              />
+            </motion.span>
           ))}
         </div>
-        <span className="text-base text-white">같이하기!</span>
+        <span className="whitespace-nowrap text-base text-white drop-shadow-[0_1px_1px_rgba(43,32,64,0.18)]">
+          같이하기!
+        </span>
       </motion.button>
 
       {/* 설정 버튼 */}

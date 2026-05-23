@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import type { CharacterType } from "@/lib/types";
 
 type Expression = "sleeping" | "happy" | "excited" | "cool" | "worried";
-type CharacterVariant = "icon" | "card";
+type CharacterVariant = "icon" | "card" | "cutout";
 
 interface CharacterProps {
   type: CharacterType;
@@ -17,32 +17,37 @@ const CARD_ASPECT_RATIO = 760 / 1200;
 
 const CHARACTER_ASSETS: Record<
   CharacterType,
-  { label: string; icon: string; card: string }
+  { label: string; icon: string; card: string; cutout: string }
 > = {
   byeol: {
-    label: "별이",
+    label: "토토",
     icon: "/images/characters/byeol-icon.png",
     card: "/images/characters/byeol-card.png",
+    cutout: "/images/characters/cutouts/byeol-cutout.png",
   },
   mori: {
-    label: "모리",
+    label: "도도",
     icon: "/images/characters/mori-icon.png",
     card: "/images/characters/mori-card.png",
+    cutout: "/images/characters/cutouts/mori-cutout.png",
   },
   pari: {
-    label: "파리",
+    label: "초롱이",
     icon: "/images/characters/pari-icon.png",
     card: "/images/characters/pari-card.png",
+    cutout: "/images/characters/cutouts/pari-cutout.png",
   },
   sosol: {
-    label: "소솔",
+    label: "뾰족이",
     icon: "/images/characters/sosol-icon.png",
     card: "/images/characters/sosol-card.png",
+    cutout: "/images/characters/cutouts/sosol-cutout.png",
   },
   dali: {
-    label: "달이",
+    label: "귀요미",
     icon: "/images/characters/dali-icon.png",
     card: "/images/characters/dali-card.png",
+    cutout: "/images/characters/cutouts/dali-cutout.png",
   },
 };
 
@@ -54,6 +59,7 @@ export default function Character({
 }: CharacterProps) {
   const asset = CHARACTER_ASSETS[type];
   const isCard = variant === "card";
+  const src = variant === "card" ? asset.card : variant === "cutout" ? asset.cutout : asset.icon;
   const style: CSSProperties = isCard
     ? { width: Math.round(size * CARD_ASPECT_RATIO), height: size }
     : { width: size, height: size };
@@ -64,7 +70,7 @@ export default function Character({
       style={style}
     >
       <img
-        src={isCard ? asset.card : asset.icon}
+        src={src}
         alt={asset.label}
         className="h-full w-full object-contain"
         draggable={false}

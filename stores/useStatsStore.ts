@@ -17,22 +17,28 @@ function getToday(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-function calculateStreak(records: DailyRecord[]): number {
-  const sorted = [...records]
-    .filter((r) => r.isAllClear)
-    .sort((a, b) => b.date.localeCompare(a.date));
+function getRecordRoutine(record: DailyRecord): string {
+  return record.routineType ?? "morning";
+}
 
-  if (sorted.length === 0) return 0;
+function calculateStreak(records: DailyRecord[]): number {
+  const clearDates = new Set(
+    records
+      .filter((r) => r.isAllClear)
+      .map((r) => r.date)
+  );
+
+  if (clearDates.size === 0) return 0;
 
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < sorted.length; i++) {
+  for (let i = 0; i < clearDates.size; i++) {
     const expected = new Date(today);
     expected.setDate(expected.getDate() - i);
     const expectedStr = expected.toISOString().split("T")[0];
-    if (sorted[i].date === expectedStr) {
+    if (clearDates.has(expectedStr)) {
       streak++;
     } else {
       break;
@@ -49,7 +55,9 @@ export const useStatsStore = create<StatsStore>()(
 
       addRecord: (record) =>
         set((state) => {
-          const existing = state.records.findIndex((r) => r.date === record.date);
+          const existing = state.records.findIndex(
+            (r) => r.date === record.date && getRecordRoutine(r) === getRecordRoutine(record)
+          );
           let records: DailyRecord[];
           if (existing >= 0) {
             records = [...state.records];

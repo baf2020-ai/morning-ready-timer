@@ -6,9 +6,10 @@ import { useGameStore } from "@/stores/useGameStore";
 import { useStatsStore } from "@/stores/useStatsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import Confetti from "@/components/gamification/Confetti";
-import AppleTreeReward from "@/components/gamification/AppleTreeReward";
+import AppleTreeReward, { type AppleRewardKind } from "@/components/gamification/AppleTreeReward";
 import Character from "@/components/svg/characters/Character";
 import { COLORS, PRAISE_MESSAGES } from "@/lib/constants";
+import { didSessionMissDeadline } from "@/lib/sessionOutcome";
 import { useMemo } from "react";
 
 function formatTotalTime(seconds: number): string {
@@ -55,6 +56,10 @@ export default function CompletePage() {
     (sum, p) => sum + p.results.reduce((s, r) => s + r.elapsedSeconds, 0),
     0
   );
+  const missedDeadline = didSessionMissDeadline(session);
+  const rewardKind: AppleRewardKind = missedDeadline ? "fall" : "grow";
+  const resultMessage = missedDeadline ? "조금 늦었지만 끝까지 해냈어" : praise;
+  const resultColor = missedDeadline ? COLORS.accent : COLORS.primary;
 
   // 플레이어별 캐릭터 타입 가져오기
   const playerProfiles = session.players.map(
@@ -66,7 +71,7 @@ export default function CompletePage() {
       className="relative flex h-full flex-col items-center gap-4 overflow-y-auto px-4 py-5 paper-bg"
       style={{ backgroundColor: COLORS.bgLight }}
     >
-      <Confetti />
+      {!missedDeadline && <Confetti />}
 
       {/* 캐릭터들이 점프! */}
       <div className="flex gap-3 pt-1">
@@ -78,7 +83,11 @@ export default function CompletePage() {
             transition={{ duration: 0.8, delay: i * 0.2 }}
             className="char-idle"
           >
-            <Character type={profile.characterType} expression="excited" size={64} />
+            <Character
+              type={profile.characterType}
+              expression={missedDeadline ? "worried" : "excited"}
+              size={64}
+            />
           </motion.div>
         ))}
       </div>
@@ -89,13 +98,13 @@ export default function CompletePage() {
         animate={{ scale: 1, rotate: 2 }}
         transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.5 }}
         className="relative px-5 py-2 rounded-2xl"
-        style={{ backgroundColor: COLORS.primary }}
+        style={{ backgroundColor: resultColor }}
       >
-        <p className="text-xl text-white text-center">{praise}</p>
+        <p className="text-xl text-white text-center">{resultMessage}</p>
         {/* 말풍선 꼬리 */}
         <div
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
-          style={{ backgroundColor: COLORS.primary }}
+          style={{ backgroundColor: resultColor }}
         />
       </motion.div>
 
@@ -107,9 +116,9 @@ export default function CompletePage() {
         className="w-full max-w-4xl"
       >
         <AppleTreeReward
-          appleCount={1}
-          fallenCount={0}
-          sequence={["grow"]}
+          appleCount={rewardKind === "grow" ? 1 : 0}
+          fallenCount={rewardKind === "fall" ? 1 : 0}
+          sequence={[rewardKind]}
           className="rounded-lg shadow-[0_10px_30px_rgba(108,92,231,0.12)]"
         />
       </motion.div>
@@ -122,9 +131,18 @@ export default function CompletePage() {
         className="flex flex-wrap items-center justify-center gap-3 text-center"
       >
         <div>
-          <p className="text-xs" style={{ color: COLORS.textSub }}>오늘 열린 사과</p>
-          <p className="text-lg" style={{ color: COLORS.primary, fontFamily: "Fredoka" }}>
+          <p className="text-xs" style={{ color: COLORS.textSub }}>
+            {missedDeadline ? "떨어진 사과" : "오늘 열린 사과"}
+          </p>
+          <p className="text-lg" style={{ color: resultColor, fontFamily: "Fredoka" }}>
             1개
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs" style={{ color: COLORS.textSub }}>결과</p>
+          <p className="text-lg" style={{ color: resultColor }}>
+            {missedDeadline ? "조금 늦음" : "시간 안 성공"}
           </p>
         </div>
 

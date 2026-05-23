@@ -9,6 +9,7 @@ import ProgressSteps from "@/components/timer/ProgressSteps";
 import AppleTreeReward, { type AppleRewardKind } from "@/components/gamification/AppleTreeReward";
 import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
+import { didPlayerMissDeadline } from "@/lib/sessionOutcome";
 import { soundManager } from "@/lib/sounds";
 
 function adjustColorBrightness(hex: string, amount: number): string {
@@ -106,7 +107,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   };
 
   if (player.isCompleted) {
-    const rewardKind: AppleRewardKind = player.results.some((result) => result.stars < 3) ? "fall" : "grow";
+    const rewardKind: AppleRewardKind = didPlayerMissDeadline(player, tasks) ? "fall" : "grow";
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
@@ -182,7 +183,13 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           className="flex items-center justify-center rounded-full shrink-0 overflow-hidden"
           style={{ width: 44, height: 44, backgroundColor: playerColor.bg }}
         >
-          <Character type={profile.characterType} expression="happy" size={36} />
+          <Character
+            type={profile.characterType}
+            expression="happy"
+            size={42}
+            variant="cutout"
+            className="drop-shadow-[0_2px_3px_rgba(43,32,64,0.18)]"
+          />
         </div>
         <div className="flex flex-col min-w-0">
           <p className="text-lg font-bold truncate" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
@@ -281,7 +288,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
             style={{
               height: 80,
               backgroundColor: COLORS.primary,
-              boxShadow: `0 4px 0 ${playerColor.shadow}`,
+              boxShadow: "0 4px 0 #5041C0",
               fontFamily: "Jua, sans-serif",
             }}
           >

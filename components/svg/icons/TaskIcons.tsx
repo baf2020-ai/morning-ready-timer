@@ -124,6 +124,36 @@ function ShoesIcon({ size = 80 }: IconProps) {
   );
 }
 
+function CustomIcon({ size = 80 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      {/* 메모 카드 */}
+      <rect x="24" y="20" width="48" height="58" rx="10" fill="#FFF4D6" stroke="#FFAD42" strokeWidth="3" />
+      <path d="M34 36 H58" stroke="#FDCB6E" strokeWidth="3" strokeLinecap="round" />
+      <path d="M34 48 H55" stroke="#FDCB6E" strokeWidth="3" strokeLinecap="round" />
+      <path d="M34 60 H48" stroke="#FDCB6E" strokeWidth="3" strokeLinecap="round" />
+      {/* 별 스티커 */}
+      <path
+        d="M59 25L62 31L69 32L64 37L65 44L59 40L53 44L54 37L49 32L56 31Z"
+        fill="#FFE66D"
+        stroke="#FFAD42"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* 연필 */}
+      <path
+        d="M55 71L76 50C78 48 81 48 83 50L86 53C88 55 88 58 86 60L65 81L54 82Z"
+        fill="#BAE1FF"
+        stroke="#74B9FF"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <path d="M76 50L86 60" stroke="#4E9FEF" strokeWidth="3" strokeLinecap="round" />
+      <path d="M54 82L57 73L65 81Z" fill="#C8A882" stroke="#A07850" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const ICON_MAP: Record<TaskIconType, React.FC<IconProps>> = {
   blanket: BlanketIcon,
   meal: MealIcon,
@@ -131,6 +161,7 @@ const ICON_MAP: Record<TaskIconType, React.FC<IconProps>> = {
   clothes: ClothesIcon,
   backpack: BackpackIcon,
   shoes: ShoesIcon,
+  custom: CustomIcon,
 };
 
 export default function TaskIcon({ icon, size = 80, className }: IconProps & { icon: TaskIconType }) {
