@@ -28,6 +28,8 @@ interface GameStore {
   adjustTime: (playerIndex: number, deltaSeconds: number) => void;
   setDuration: (playerIndex: number, seconds: number) => void;
   getTaskDuration: (playerIndex: number) => number;
+  undoLastComplete: (playerIndex: number) => void;
+  hasUndoAvailable: (playerIndex: number) => boolean;
 }
 
 /**
@@ -229,6 +231,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         durationOverrides: durationOv,
         elapsedOverrides: elapsedOv,
         isCompleted: false,
+        lastUndo: undefined,
         // isTimerRunning, activeRunningTaskIndex, taskStartedAt → 그대로 유지
       };
     });
@@ -334,6 +337,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const nextTask = tasks[nextIndex];
     const restoredDuration = nextTask ? durationOv[nextTask.id] : undefined;
 
+    // 직전 player 상태 스냅샷 (undo용, lastUndo 제외)
+    const { lastUndo: _prevUndo, ...snapshot } = player;
+    void _prevUndo;
+
     const currentTime = Date.now();
     const newPlayers = session.players.map((p, i) => {
       if (i !== playerIndex) return p;
@@ -349,10 +356,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
         adjustedDuration: restoredDuration,
         durationOverrides: durationOv,
         elapsedOverrides: elapsedOv,
+        lastUndo: { snapshot, taskLabel: task.label },
       };
     });
 
     set({ session: { ...session, players: newPlayers } });
+  },
+
+  undoLastComplete: (playerIndex) => {
+    const { session } = get();
+    if (!session) return;
+    const player = session.players[playerIndex];
+    if (!player || !player.lastUndo) return;
+
+    const restored = { ...player.lastUndo.snapshot, lastUndo: undefined };
+    const newPlayers = session.players.map((p, i) => (i === playerIndex ? restored : p));
+    set({ session: { ...session, players: newPlayers } });
+  },
+
+  hasUndoAvailable: (playerIndex) => {
+    const { session } = get();
+    if (!session) return false;
+    return Boolean(session.players[playerIndex]?.lastUndo);
   },
 
   pauseGame: () => {

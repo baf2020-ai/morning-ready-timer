@@ -45,6 +45,10 @@ export interface PlayerState {
   adjustedDuration?: number;      // +/-1분 세션 한정 조정 (undefined = 원래 시간)
   durationOverrides?: Record<string, number>;  // 태스크별 시간 변경 (taskId → seconds)
   elapsedOverrides?: Record<string, number>;   // 태스크별 경과 시간 보존 (taskId → elapsed ms)
+  lastUndo?: {
+    snapshot: Omit<PlayerState, "lastUndo">;
+    taskLabel: string;
+  };
 }
 
 /** 게임 세션 */

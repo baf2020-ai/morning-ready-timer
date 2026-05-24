@@ -35,6 +35,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const session = useGameStore((s) => s.session);
   const now = useGameStore((s) => s.now);
   const completeTask = useGameStore((s) => s.completeTask);
+  const undoLastComplete = useGameStore((s) => s.undoLastComplete);
   const getRemainingSeconds = useGameStore((s) => s.getRemainingSeconds);
   const getPlayerTasks = useGameStore((s) => s.getPlayerTasks);
   const getTaskDuration = useGameStore((s) => s.getTaskDuration);
@@ -74,6 +75,11 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     soundManager.play("tap");
     completeTask(playerIndex);
   }, [completeTask, playerIndex]);
+
+  const handleUndo = useCallback(() => {
+    soundManager.play("tap");
+    undoLastComplete(playerIndex);
+  }, [undoLastComplete, playerIndex]);
 
   const handleStartTimer = useCallback(() => {
     soundManager.play("tap");
@@ -153,6 +159,23 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         >
           ✓
         </motion.div>
+        {player.lastUndo && (
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleUndo}
+            className="mt-2 px-4 py-2 rounded-full text-sm font-bold"
+            style={{
+              color: COLORS.primary,
+              backgroundColor: "#F0EBFF",
+              fontFamily: "Jua, sans-serif",
+            }}
+          >
+            ↩ 방금 완료 취소
+          </motion.button>
+        )}
       </div>
     );
   }
@@ -312,6 +335,28 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
 
         {/* 18px gap */}
         <div style={{ height: 18 }} />
+
+        {/* 방금 완료 취소 버튼 (직전 완료가 있을 때만) */}
+        {player.lastUndo && (
+          <>
+            <motion.button
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleUndo}
+              className="w-full flex items-center justify-center rounded-2xl font-bold text-base"
+              style={{
+                height: 56,
+                backgroundColor: "#F0EBFF",
+                color: COLORS.primary,
+                fontFamily: "Jua, sans-serif",
+              }}
+            >
+              ↩ &quot;{player.lastUndo.taskLabel}&quot; 완료 취소
+            </motion.button>
+            <div style={{ height: 10 }} />
+          </>
+        )}
 
         {/* 완료 버튼 */}
         <motion.button
