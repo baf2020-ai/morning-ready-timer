@@ -274,8 +274,8 @@ function AppleBoardOverview({ routineFilter }: { routineFilter: RoutineType }) {
         {/* 요일 헤더 */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
           {WEEKDAY_SHORT.map((wd) => (
-            <div key={wd} className="text-center py-1">
-              <span className="text-[10px] font-bold" style={{ color: COLORS.textSub }}>{wd}</span>
+            <div key={wd} className="text-center py-1 md:py-1.5">
+              <span className="text-[10px] md:text-sm font-bold" style={{ color: COLORS.textSub }}>{wd}</span>
             </div>
           ))}
 
@@ -296,10 +296,8 @@ function AppleBoardOverview({ routineFilter }: { routineFilter: RoutineType }) {
                 className="flex flex-col items-center py-0.5"
               >
                 <div
-                  className="relative flex items-center justify-center rounded-xl"
+                  className="relative flex items-center justify-center rounded-xl w-9 h-9 md:w-12 md:h-12"
                   style={{
-                    width: 36,
-                    height: 36,
                     backgroundColor: hasApple ? "#FFEDE8" : cell.isToday ? "#F0EBFF" : "transparent",
                     border: hasApple ? "2px solid #F4A79B" : cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
                     boxShadow: hasApple ? "0 2px 0 rgba(232,93,79,0.18)" : "none",
@@ -446,8 +444,8 @@ function PlayerAppleBoard({ profile, routineFilter }: { profile: { id: string; n
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
           {WEEKDAY_SHORT.map((wd) => (
-            <div key={wd} className="text-center py-1">
-              <span className="text-[10px] font-bold" style={{ color: COLORS.textSub }}>{wd}</span>
+            <div key={wd} className="text-center py-1 md:py-1.5">
+              <span className="text-[10px] md:text-sm font-bold" style={{ color: COLORS.textSub }}>{wd}</span>
             </div>
           ))}
 
@@ -467,10 +465,8 @@ function PlayerAppleBoard({ profile, routineFilter }: { profile: { id: string; n
                 className="flex flex-col items-center py-0.5"
               >
                 <div
-                  className="relative flex items-center justify-center rounded-xl"
+                  className="relative flex items-center justify-center rounded-xl w-9 h-9 md:w-12 md:h-12"
                   style={{
-                    width: 36,
-                    height: 36,
                     backgroundColor: hasApple ? "#FFEDE8" : cell.isToday ? "#F0EBFF" : "transparent",
                     border: hasApple ? "2px solid #F4A79B" : cell.isToday ? `2px solid ${COLORS.primary}` : "2px solid transparent",
                     boxShadow: hasApple ? "0 2px 0 rgba(232,93,79,0.18)" : "none",
@@ -577,18 +573,18 @@ export default function StatsPage() {
     <div className="flex flex-col h-full paper-bg" style={{ backgroundColor: COLORS.bgPurple }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3"
+        className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4"
         style={{ backgroundColor: "#FFFFFF", borderBottom: `2px solid #F0EBFF` }}
       >
         <button
           onClick={() => router.back()}
-          className="text-sm px-3 py-1 rounded-full"
+          className="text-sm md:text-base px-3 md:px-4 py-1 md:py-1.5 rounded-full"
           style={{ color: COLORS.textSub, backgroundColor: "rgba(108,92,231,0.06)" }}
         >
           ← 뒤로
         </button>
-        <h1 className="text-lg" style={{ color: COLORS.primary }}>사과나무 통계</h1>
-        <div className="w-10" />
+        <h1 className="text-lg md:text-2xl" style={{ color: COLORS.primary }}>사과나무 통계</h1>
+        <div className="w-10 md:w-16" />
       </div>
 
       {/* 루틴 선택 */}
@@ -632,7 +628,7 @@ export default function StatsPage() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 w-full max-w-3xl mx-auto">
         {activeTab === "overview" ? (
           <AppleBoardOverview routineFilter={routineFilter} />
         ) : (

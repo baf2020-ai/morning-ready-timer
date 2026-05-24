@@ -9,6 +9,7 @@ import { useGameStore } from "@/stores/useGameStore";
 import { soundManager } from "@/lib/sounds";
 import { COLORS, ROUTINE_THEME } from "@/lib/constants";
 import { SunIcon, MoonIcon } from "@/components/svg/icons/RoutineIcons";
+import { useIsTablet } from "@/lib/useMediaQuery";
 import type { PlayerProfile, RoutineType } from "@/lib/types";
 
 export default function HomePage() {
@@ -17,8 +18,11 @@ export default function HomePage() {
   const startGame = useGameStore((s) => s.startGame);
   const profiles = settings.profiles;
   const [routine, setRoutine] = useState<RoutineType>("morning");
+  const isTablet = useIsTablet();
 
   const theme = ROUTINE_THEME[routine];
+  const soloCharSize = isTablet ? 156 : 112;
+  const groupCharSize = isTablet ? 76 : 54;
 
   const handleSoloStart = async (profile: PlayerProfile) => {
     await soundManager.init();
@@ -40,7 +44,7 @@ export default function HomePage() {
 
   return (
     <div
-      className={`flex flex-col items-center justify-center h-full gap-5 px-6 paper-bg overflow-hidden ${theme.bgClass}`}
+      className={`flex flex-col items-center justify-center h-full gap-5 md:gap-8 px-6 md:px-10 paper-bg overflow-hidden ${theme.bgClass}`}
     >
       {/* 루틴 모드 선택 탭 */}
       <div
@@ -74,12 +78,12 @@ export default function HomePage() {
           className="text-center"
         >
           <h1
-            className="text-3xl font-bold"
+            className="text-3xl md:text-5xl font-bold"
             style={{ color: isMorning ? COLORS.primary : "#7C6CDB" }}
           >
             {theme.title}
           </h1>
-          <p className="text-sm mt-1" style={{ color: COLORS.textSub }}>
+          <p className="text-sm md:text-lg mt-1 md:mt-2" style={{ color: COLORS.textSub }}>
             {theme.subtitle}
           </p>
         </motion.div>
@@ -87,10 +91,10 @@ export default function HomePage() {
 
       {/* 혼자 하기 */}
       <div className="text-center">
-        <p className="text-sm mb-3" style={{ color: COLORS.textSub }}>
+        <p className="text-sm md:text-base mb-3 md:mb-5" style={{ color: COLORS.textSub }}>
           누가 준비할까?
         </p>
-        <div className="flex gap-5">
+        <div className="flex gap-5 md:gap-8">
           {profiles.map((profile, i) => (
             <motion.button
               key={profile.id}
@@ -99,10 +103,10 @@ export default function HomePage() {
               transition={{ delay: 0.2 + i * 0.1, type: "spring", stiffness: 300, damping: 15 }}
               whileTap={{ scale: 0.9, rotate: -2 }}
               onClick={() => handleSoloStart(profile)}
-              className="sticker-card flex flex-col items-center gap-2 overflow-visible p-4"
+              className="sticker-card flex flex-col items-center gap-2 md:gap-3 overflow-visible p-4 md:p-6"
               style={{ minWidth: "128px", transform: `rotate(${i % 2 === 0 ? -1 : 1}deg)` }}
             >
-              <div className="relative flex h-[112px] w-[112px] items-end justify-center overflow-visible">
+              <div className="relative flex h-[112px] w-[112px] md:h-[160px] md:w-[160px] items-end justify-center overflow-visible">
                 <div
                   className="absolute bottom-2 h-12 w-24 rounded-full"
                   style={{
@@ -115,7 +119,7 @@ export default function HomePage() {
                   <Character
                     type={profile.characterType}
                     expression={isMorning ? "happy" : "sleeping"}
-                    size={112}
+                    size={soloCharSize}
                     variant="cutout"
                   />
                 </div>
@@ -124,11 +128,11 @@ export default function HomePage() {
                 className="rounded-full"
                 style={{ width: 50, height: 6, background: "rgba(108,92,231,0.1)", marginTop: -2 }}
               />
-              <span className="text-base" style={{ color: COLORS.textDark }}>
+              <span className="text-base md:text-xl" style={{ color: COLORS.textDark }}>
                 {profile.name}
               </span>
               <span
-                className="jelly-btn px-4 py-1.5 text-sm"
+                className="jelly-btn px-4 md:px-6 py-1.5 md:py-2.5 text-sm md:text-base"
                 style={{
                   backgroundColor: isMorning ? COLORS.secondary : "#7C6CDB",
                   "--btn-shadow": isMorning ? "#E09030" : "#5041C0",
@@ -148,21 +152,21 @@ export default function HomePage() {
         transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 15 }}
         whileTap={{ scale: 0.9, rotate: 1 }}
         onClick={handleDualStart}
-        className="flex items-center gap-4 overflow-visible rounded-full px-6 py-3.5"
+        className="flex items-center gap-4 md:gap-6 overflow-visible rounded-full px-6 md:px-10 py-3.5 md:py-5"
         style={{
           backgroundColor: isMorning ? COLORS.primary : "#7C6CDB",
           minHeight: 68,
           boxShadow: `0 5px 0 ${isMorning ? "#5041C0" : "#4A3BA0"}, 0 10px 20px rgba(108,92,231,0.26)`,
         }}
       >
-        <div className="flex items-end -space-x-2.5">
+        <div className="flex items-end -space-x-2.5 md:-space-x-3">
           {profiles.map((profile, i) => (
             <motion.span
               key={profile.id}
               initial={{ scale: 0.8, y: 8, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               transition={{ delay: 0.62 + i * 0.08, type: "spring", stiffness: 280, damping: 16 }}
-              className="relative flex h-12 w-12 flex-shrink-0 items-end justify-center overflow-visible rounded-full border-2 border-white/80 bg-white/95"
+              className="relative flex h-12 w-12 md:h-16 md:w-16 flex-shrink-0 items-end justify-center overflow-visible rounded-full border-2 border-white/80 bg-white/95"
               style={{
                 zIndex: profiles.length - i,
                 boxShadow: "0 3px 0 rgba(255,255,255,0.35), 0 5px 10px rgba(43,32,64,0.16)",
@@ -171,14 +175,14 @@ export default function HomePage() {
               <Character
                 type={profile.characterType}
                 expression="excited"
-                size={54}
+                size={groupCharSize}
                 variant="cutout"
                 className="-mb-1 drop-shadow-[0_3px_4px_rgba(43,32,64,0.16)]"
               />
             </motion.span>
           ))}
         </div>
-        <span className="whitespace-nowrap text-base text-white drop-shadow-[0_1px_1px_rgba(43,32,64,0.18)]">
+        <span className="whitespace-nowrap text-base md:text-xl text-white drop-shadow-[0_1px_1px_rgba(43,32,64,0.18)]">
           같이하기!
         </span>
       </motion.button>

@@ -94,29 +94,29 @@ export default function PlayContent() {
     <div className="relative flex flex-col h-full paper-bg" style={{ backgroundColor: COLORS.bgLight }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 pt-3 pb-4 safe-top"
+        className="flex items-center justify-between px-5 md:px-10 pt-3 md:pt-4 pb-4 md:pb-5 safe-top"
         style={{ backgroundColor: "white", borderBottom: `2px solid #F0EBFF` }}
       >
         <button
           onClick={handleHome}
-          className="text-base px-4 py-2 rounded-full font-bold"
+          className="text-base md:text-lg px-4 md:px-6 py-2 md:py-2.5 rounded-full font-bold"
           style={{ color: COLORS.textSub, backgroundColor: "rgba(108,92,231,0.06)", fontFamily: "Jua, sans-serif" }}
         >
           ← 홈
         </button>
-        <h1 className="text-lg font-bold" style={{ color: COLORS.primary, fontFamily: "Jua, sans-serif" }}>
+        <h1 className="text-lg md:text-2xl font-bold" style={{ color: COLORS.primary, fontFamily: "Jua, sans-serif" }}>
           {ROUTINE_THEME[session.routineType ?? "morning"].headerTitle}
         </h1>
         <div className="flex gap-3">
           <button
             onClick={toggleMute}
-            className="w-10 h-10 flex items-center justify-center rounded-full"
+            className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full"
             style={{ backgroundColor: "rgba(108,92,231,0.06)", color: COLORS.primary }}
           >
             {session.isMuted ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>
+              <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 5L6 9H2v6h4l5 4V5z" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
+              <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M11 5L6 9H2v6h4l5 4V5z" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
             )}
           </button>
         </div>

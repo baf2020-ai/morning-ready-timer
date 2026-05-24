@@ -10,6 +10,7 @@ import AppleTreeReward, { type AppleRewardKind } from "@/components/gamification
 import Character from "@/components/svg/characters/Character";
 import { COLORS, PRAISE_MESSAGES } from "@/lib/constants";
 import { didSessionMissDeadline } from "@/lib/sessionOutcome";
+import { useIsTablet } from "@/lib/useMediaQuery";
 import { useMemo } from "react";
 
 function formatTotalTime(seconds: number): string {
@@ -24,6 +25,7 @@ export default function CompletePage() {
   const resetGame = useGameStore((s) => s.resetGame);
   const streak = useStatsStore((s) => s.getStreak());
   const profiles = useSettingsStore((s) => s.settings.profiles);
+  const isTablet = useIsTablet();
 
   const routineType = session?.routineType ?? "morning";
   const messages = PRAISE_MESSAGES[routineType];
@@ -68,13 +70,13 @@ export default function CompletePage() {
 
   return (
     <div
-      className="relative flex h-full flex-col items-center gap-4 overflow-y-auto px-4 py-5 paper-bg"
+      className="relative flex h-full flex-col items-center gap-4 md:gap-6 overflow-y-auto px-4 md:px-8 py-5 md:py-8 paper-bg"
       style={{ backgroundColor: COLORS.bgLight }}
     >
       {!missedDeadline && <Confetti />}
 
       {/* 캐릭터들이 점프! */}
-      <div className="flex gap-3 pt-1">
+      <div className="flex gap-3 md:gap-6 pt-1 md:pt-2">
         {playerProfiles.map((profile, i) => (
           <motion.div
             key={profile.id}
@@ -86,7 +88,7 @@ export default function CompletePage() {
             <Character
               type={profile.characterType}
               expression={missedDeadline ? "worried" : "excited"}
-              size={64}
+              size={isTablet ? 104 : 64}
             />
           </motion.div>
         ))}
@@ -97,10 +99,10 @@ export default function CompletePage() {
         initial={{ scale: 0, rotate: -5 }}
         animate={{ scale: 1, rotate: 2 }}
         transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.5 }}
-        className="relative px-5 py-2 rounded-2xl"
+        className="relative px-5 md:px-8 py-2 md:py-3 rounded-2xl"
         style={{ backgroundColor: resultColor }}
       >
-        <p className="text-xl text-white text-center">{resultMessage}</p>
+        <p className="text-xl md:text-3xl text-white text-center">{resultMessage}</p>
         {/* 말풍선 꼬리 */}
         <div
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
@@ -128,35 +130,35 @@ export default function CompletePage() {
         initial={{ y: 16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 1.15 }}
-        className="flex flex-wrap items-center justify-center gap-3 text-center"
+        className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-center"
       >
         <div>
-          <p className="text-xs" style={{ color: COLORS.textSub }}>
+          <p className="text-xs md:text-sm" style={{ color: COLORS.textSub }}>
             {missedDeadline ? "떨어진 사과" : "오늘 열린 사과"}
           </p>
-          <p className="text-lg" style={{ color: resultColor, fontFamily: "Fredoka" }}>
+          <p className="text-lg md:text-2xl" style={{ color: resultColor, fontFamily: "Fredoka" }}>
             1개
           </p>
         </div>
 
         <div>
-          <p className="text-xs" style={{ color: COLORS.textSub }}>결과</p>
-          <p className="text-lg" style={{ color: resultColor }}>
+          <p className="text-xs md:text-sm" style={{ color: COLORS.textSub }}>결과</p>
+          <p className="text-lg md:text-2xl" style={{ color: resultColor }}>
             {missedDeadline ? "조금 늦음" : "시간 안 성공"}
           </p>
         </div>
 
         <div>
-          <p className="text-xs" style={{ color: COLORS.textSub }}>총 시간</p>
-          <p className="text-lg" style={{ color: COLORS.textDark, fontFamily: "Fredoka" }}>
+          <p className="text-xs md:text-sm" style={{ color: COLORS.textSub }}>총 시간</p>
+          <p className="text-lg md:text-2xl" style={{ color: COLORS.textDark, fontFamily: "Fredoka" }}>
             {formatTotalTime(totalSeconds)}
           </p>
         </div>
 
         {streak > 0 && (
           <div>
-            <p className="text-xs" style={{ color: COLORS.textSub }}>연속 기록</p>
-            <p className="text-lg" style={{ color: COLORS.mint }}>
+            <p className="text-xs md:text-sm" style={{ color: COLORS.textSub }}>연속 기록</p>
+            <p className="text-lg md:text-2xl" style={{ color: COLORS.mint }}>
               {streak}일
             </p>
           </div>
@@ -170,7 +172,7 @@ export default function CompletePage() {
         transition={{ delay: 1.35 }}
         whileTap={{ scale: 0.9, rotate: -2 }}
         onClick={handleHome}
-        className="jelly-btn px-8 py-3 text-lg text-white"
+        className="jelly-btn px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl text-white"
         style={{
           backgroundColor: COLORS.mint,
           "--btn-shadow": "#009B7D",

@@ -111,9 +111,9 @@ export default function SettingsPage() {
 
   if (!isUnlocked) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-6 px-6 paper-bg" style={{ backgroundColor: COLORS.bgPurple }}>
-        <p className="text-2xl" style={{ color: COLORS.textDark }}>설정 잠금</p>
-        <p className="text-sm" style={{ color: COLORS.textSub }}>PIN 번호를 입력하세요</p>
+      <div className="flex flex-col items-center justify-center h-full gap-6 md:gap-8 px-6 paper-bg" style={{ backgroundColor: COLORS.bgPurple }}>
+        <p className="text-2xl md:text-3xl" style={{ color: COLORS.textDark }}>설정 잠금</p>
+        <p className="text-sm md:text-base" style={{ color: COLORS.textSub }}>PIN 번호를 입력하세요</p>
         <input
           type="password"
           inputMode="numeric"
@@ -147,27 +147,27 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full paper-bg" style={{ backgroundColor: COLORS.bgPurple }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3"
+        className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4"
         style={{ backgroundColor: "#FFFFFF", borderBottom: `2px solid #F0EBFF` }}
       >
         <button
           onClick={() => router.push("/")}
-          className="text-sm px-3 py-1 rounded-full"
+          className="text-sm md:text-base px-3 md:px-4 py-1 md:py-1.5 rounded-full"
           style={{ color: COLORS.textSub, backgroundColor: "rgba(108,92,231,0.06)" }}
         >
           ← 뒤로
         </button>
-        <h1 className="text-lg" style={{ color: COLORS.primary }}>부모 설정</h1>
+        <h1 className="text-lg md:text-2xl" style={{ color: COLORS.primary }}>부모 설정</h1>
         <button
           onClick={() => router.push("/stats")}
-          className="text-sm px-3 py-1 rounded-full"
+          className="text-sm md:text-base px-3 md:px-4 py-1 md:py-1.5 rounded-full"
           style={{ color: COLORS.primary, backgroundColor: "rgba(108,92,231,0.06)" }}
         >
           통계
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-5 md:space-y-6 w-full max-w-3xl mx-auto">
         {/* 프로필 설정 */}
         <section className="sticker-card p-4" style={{ transform: "rotate(0deg)", borderRadius: "20px" }}>
           <h2 className="text-base mb-3" style={{ color: COLORS.primary }}>프로필</h2>

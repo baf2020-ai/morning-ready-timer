@@ -11,6 +11,7 @@ import Character from "@/components/svg/characters/Character";
 import { COLORS } from "@/lib/constants";
 import { didPlayerMissDeadline } from "@/lib/sessionOutcome";
 import { soundManager } from "@/lib/sounds";
+import { useIsTablet } from "@/lib/useMediaQuery";
 
 function adjustColorBrightness(hex: string, amount: number): string {
   const num = parseInt(hex.replace("#", ""), 16);
@@ -45,6 +46,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
   const setDuration = useGameStore((s) => s.setDuration);
   const restartPlayer = useGameStore((s) => s.restartPlayer);
   const profiles = useSettingsStore((s) => s.settings.profiles);
+  const isTablet = useIsTablet();
 
   const [showTimeEditor, setShowTimeEditor] = useState(false);
   const [editMinutes, setEditMinutes] = useState(0);
@@ -116,21 +118,21 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     const rewardKind: AppleRewardKind = didPlayerMissDeadline(player, tasks) ? "fall" : "grow";
 
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
-        <div className="flex items-center gap-3">
+      <div className="flex h-full flex-col items-center justify-center gap-3 md:gap-5 p-4 md:p-8 w-full max-w-3xl mx-auto">
+        <div className="flex items-center gap-3 md:gap-5">
           <motion.div
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 12 }}
             className="char-idle"
           >
-            <Character type={profile.characterType} expression="excited" size={72} />
+            <Character type={profile.characterType} expression="excited" size={isTablet ? 108 : 72} />
           </motion.div>
           <motion.p
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-lg"
+            className="text-lg md:text-2xl"
             style={{ color: COLORS.textDark }}
           >
             {profile.name} 완료!
@@ -141,7 +143,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           initial={{ y: 18, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md md:max-w-xl"
         >
           <AppleTreeReward
             appleCount={rewardKind === "grow" ? 1 : 0}
@@ -155,7 +157,12 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           animate={{ scale: 1 }}
           transition={{ delay: 0.75, type: "spring" }}
           className="flex items-center justify-center rounded-full text-white"
-          style={{ width: 54, height: 54, backgroundColor: COLORS.mint, fontSize: 28 }}
+          style={{
+            width: isTablet ? 72 : 54,
+            height: isTablet ? 72 : 54,
+            backgroundColor: COLORS.mint,
+            fontSize: isTablet ? 36 : 28,
+          }}
         >
           ✓
         </motion.div>
@@ -166,7 +173,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
             transition={{ delay: 1.0 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleUndo}
-            className="mt-2 px-4 py-2 rounded-full text-sm font-bold"
+            className="mt-2 px-4 md:px-6 py-2 md:py-2.5 rounded-full text-sm md:text-base font-bold"
             style={{
               color: COLORS.primary,
               backgroundColor: "#F0EBFF",
@@ -199,37 +206,37 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
     <div className="relative flex flex-col h-full">
       {/* 1. 헤더: 아바타 + 이름 + 스텝 카운터 */}
       <div
-        className="flex items-center gap-3 px-4 py-3"
+        className="flex items-center gap-3 md:gap-4 px-4 md:px-6 py-3 md:py-4"
         style={{ backgroundColor: "#F5F0FF" }}
       >
         <div
-          className="flex items-center justify-center rounded-full shrink-0 overflow-hidden"
+          className="flex items-center justify-center rounded-full shrink-0 overflow-hidden md:w-14 md:h-14"
           style={{ width: 44, height: 44, backgroundColor: playerColor.bg }}
         >
           <Character
             type={profile.characterType}
             expression="happy"
-            size={42}
+            size={isTablet ? 54 : 42}
             variant="cutout"
             className="drop-shadow-[0_2px_3px_rgba(43,32,64,0.18)]"
           />
         </div>
         <div className="flex flex-col min-w-0">
-          <p className="text-lg font-bold truncate" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+          <p className="text-lg md:text-2xl font-bold truncate" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
             {profile.name}
           </p>
-          <p className="text-xs" style={{ color: COLORS.textSub }}>오늘의 루틴!</p>
+          <p className="text-xs md:text-sm" style={{ color: COLORS.textSub }}>오늘의 루틴!</p>
         </div>
-        <div className="ml-auto flex items-center gap-2 shrink-0">
+        <div className="ml-auto flex items-center gap-2 md:gap-3 shrink-0">
           <button
             onClick={() => { if (confirm(`${profile.name} 처음부터 다시 시작할까요?`)) restartPlayer(playerIndex); }}
-            className="text-sm px-3 py-1.5 rounded-full font-bold"
+            className="text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 rounded-full font-bold"
             style={{ color: COLORS.accent, backgroundColor: "rgba(232,67,147,0.06)", fontFamily: "Jua, sans-serif" }}
           >
             처음부터 다시시작
           </button>
           <span
-            className="text-sm px-3 py-1 rounded-full font-bold"
+            className="text-sm md:text-base px-3 md:px-4 py-1 md:py-1.5 rounded-full font-bold"
             style={{ backgroundColor: "white", color: COLORS.primary, border: `1.5px solid ${COLORS.primary}` }}
           >
             {player.currentTaskIndex + 1} / {tasks.length}
@@ -238,17 +245,17 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
       </div>
 
       {/* 2. 콘텐츠 영역 (스크롤, 중앙 정렬) */}
-      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 gap-5">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 md:px-8 gap-5 md:gap-7 w-full max-w-3xl mx-auto">
 
         {/* 태스크 이름 */}
         <motion.div
           key={currentTask.id}
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 md:gap-3"
         >
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: playerColor.bg }} />
-          <span className="text-xl font-bold" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
+          <span className="w-3 h-3 md:w-4 md:h-4 rounded-full" style={{ backgroundColor: playerColor.bg }} />
+          <span className="text-xl md:text-3xl font-bold" style={{ color: COLORS.textDark, fontFamily: "Jua, sans-serif" }}>
             {currentTask.label}
           </span>
         </motion.div>
@@ -263,7 +270,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <CountdownTimer
             totalSeconds={duration}
             remainingSeconds={remaining}
-            size={compact ? 220 : 280}
+            size={compact ? (isTablet ? 300 : 220) : isTablet ? 380 : 280}
             isPaused={!isDisplayedTaskRunning}
             onTimeClick={handleTimeClick}
           />
@@ -279,7 +286,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         />
 
         {/* 다음 태스크 정보 */}
-        <div className="text-sm text-center" style={{ color: COLORS.textSub }}>
+        <div className="text-sm md:text-base text-center" style={{ color: COLORS.textSub }}>
           {nextTask ? (
             <>
               <span
@@ -301,15 +308,14 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
       </div>
 
       {/* 3. 하단 고정 — 엄지 터치존 */}
-      <div className="shrink-0 px-4 pb-4 pt-2 safe-bottom" style={{ backgroundColor: "white" }}>
+      <div className="shrink-0 px-4 md:px-8 pb-4 md:pb-6 pt-2 md:pt-3 safe-bottom w-full max-w-3xl mx-auto" style={{ backgroundColor: "white" }}>
         {/* 시작/정지 버튼 */}
         {isDisplayedTaskRunning ? (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handlePauseTimer}
-            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl text-white"
+            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20 md:h-24"
             style={{
-              height: 80,
               backgroundColor: COLORS.primary,
               boxShadow: "0 4px 0 #5041C0",
               fontFamily: "Jua, sans-serif",
@@ -321,9 +327,8 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleStartTimer}
-            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl text-white"
+            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20 md:h-24"
             style={{
-              height: 80,
               backgroundColor: hasBackgroundTimer ? COLORS.secondary : COLORS.textDark,
               boxShadow: `0 4px 0 ${hasBackgroundTimer ? "#D48A20" : "#333"}`,
               fontFamily: "Jua, sans-serif",
@@ -334,7 +339,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         )}
 
         {/* 18px gap */}
-        <div style={{ height: 18 }} />
+        <div className="h-[18px] md:h-6" />
 
         {/* 방금 완료 취소 버튼 (직전 완료가 있을 때만) */}
         {player.lastUndo && (
@@ -344,9 +349,8 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
               animate={{ opacity: 1, y: 0 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleUndo}
-              className="w-full flex items-center justify-center rounded-2xl font-bold text-base"
+              className="w-full flex items-center justify-center rounded-2xl font-bold text-base md:text-lg h-14 md:h-16"
               style={{
-                height: 56,
                 backgroundColor: "#F0EBFF",
                 color: COLORS.primary,
                 fontFamily: "Jua, sans-serif",
@@ -354,7 +358,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
             >
               ↩ &quot;{player.lastUndo.taskLabel}&quot; 완료 취소
             </motion.button>
-            <div style={{ height: 10 }} />
+            <div className="h-2.5 md:h-3" />
           </>
         )}
 
@@ -362,9 +366,8 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleComplete}
-          className="w-full flex items-center justify-center rounded-2xl font-bold text-xl text-white"
+          className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20 md:h-24"
           style={{
-            height: 80,
             backgroundColor: playerColor.bg,
             boxShadow: `0 4px 0 ${playerColor.shadow}`,
             fontFamily: "Jua, sans-serif",
