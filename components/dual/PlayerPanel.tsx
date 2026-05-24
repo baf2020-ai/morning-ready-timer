@@ -245,7 +245,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
       </div>
 
       {/* 2. 콘텐츠 영역 (스크롤, 중앙 정렬) */}
-      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 md:px-8 gap-5 md:gap-7 w-full max-w-3xl mx-auto">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 md:px-8 gap-3 md:gap-7 w-full max-w-3xl mx-auto">
 
         {/* 태스크 이름 */}
         <motion.div
@@ -270,7 +270,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <CountdownTimer
             totalSeconds={duration}
             remainingSeconds={remaining}
-            size={compact ? (isTablet ? 300 : 220) : isTablet ? 380 : 280}
+            size={compact ? (isTablet ? 300 : 190) : isTablet ? 380 : 260}
             isPaused={!isDisplayedTaskRunning}
             onTimeClick={handleTimeClick}
           />
@@ -308,7 +308,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
       </div>
 
       {/* 3. 하단 고정 — 엄지 터치존 */}
-      <div className="shrink-0 px-4 md:px-8 pb-4 md:pb-6 pt-2 md:pt-3 safe-bottom w-full max-w-3xl mx-auto" style={{ backgroundColor: "white" }}>
+      <div className="shrink-0 px-4 md:px-8 pb-3 md:pb-6 pt-1.5 md:pt-3 safe-bottom w-full max-w-3xl mx-auto" style={{ backgroundColor: "white" }}>
         {/* 시작/정지 버튼 */}
         {isDisplayedTaskRunning ? (
           <motion.button
@@ -338,8 +338,8 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           </motion.button>
         )}
 
-        {/* 18px gap */}
-        <div className="h-[18px] md:h-6" />
+        {/* gap */}
+        <div className="h-3 md:h-6" />
 
         {/* 방금 완료 취소 버튼 (직전 완료가 있을 때만) */}
         {player.lastUndo && (
