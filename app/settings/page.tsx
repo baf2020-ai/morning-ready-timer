@@ -714,18 +714,25 @@ export default function SettingsPage() {
           )}
         </section>
 
-        {/* 초기화 */}
-        <section className="text-center pb-6">
+        {/* 초기화 + 개인정보 */}
+        <section className="text-center pb-6 space-y-3">
           <button
             onClick={() => {
               if (confirm("모든 설정을 초기화하시겠습니까?")) {
                 resetToDefaults();
               }
             }}
-            className="text-sm underline"
+            className="text-sm underline block mx-auto"
             style={{ color: COLORS.accent }}
           >
             설정 초기화
+          </button>
+          <button
+            onClick={() => router.push("/privacy")}
+            className="text-xs underline block mx-auto"
+            style={{ color: COLORS.textSub }}
+          >
+            개인정보 처리방침
           </button>
         </section>
       </div>

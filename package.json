@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "cap:sync": "next build && npx cap sync",
-    "cap:ios": "next build && npx cap sync ios && npx cap open ios",
-    "cap:android": "next build && npx cap sync android && npx cap open android"
+    "build:release": "next build && rm -rf out/apple-preview out/__apple-preview out/icon-preview",
+    "cap:sync": "npm run build:release && npx cap sync",
+    "cap:ios": "npm run build:release && npx cap sync ios && npx cap open ios",
+    "cap:android": "npm run build:release && npx cap sync android && npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
