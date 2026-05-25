@@ -39,9 +39,22 @@ yarn-error.log*
 # bkit
 .bkit/
 
-# capacitor native projects
-/ios/
-/android/
+# capacitor native projects — commit sources, ignore build artifacts
+ios/App/build/
+ios/DerivedData/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/local.properties
+android/captures/
+**/*.iml
+**/*.xcuserstate
+**/xcuserdata/
 
 # typescript
 *.tsbuildinfo
