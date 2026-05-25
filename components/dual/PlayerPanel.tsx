@@ -210,8 +210,8 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         style={{ backgroundColor: "#F5F0FF" }}
       >
         <div
-          className="flex items-center justify-center rounded-full shrink-0 overflow-hidden md:w-14 md:h-14"
-          style={{ width: 44, height: 44, backgroundColor: playerColor.bg }}
+          className="flex items-center justify-center rounded-full shrink-0 overflow-hidden w-11 h-11 md:w-14 md:h-14"
+          style={{ backgroundColor: playerColor.bg }}
         >
           <Character
             type={profile.characterType}
@@ -308,13 +308,13 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
       </div>
 
       {/* 3. 하단 고정 — 엄지 터치존 */}
-      <div className="shrink-0 px-4 md:px-8 pb-3 md:pb-6 pt-1.5 md:pt-3 safe-bottom w-full max-w-3xl mx-auto" style={{ backgroundColor: "white" }}>
+      <div className="shrink-0 px-4 md:px-8 pb-3 md:pb-4 pt-1.5 md:pt-2 safe-bottom w-full max-w-3xl mx-auto" style={{ backgroundColor: "white" }}>
         {/* 시작/정지 버튼 */}
         {isDisplayedTaskRunning ? (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handlePauseTimer}
-            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20 md:h-24"
+            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20"
             style={{
               backgroundColor: COLORS.primary,
               boxShadow: "0 4px 0 #5041C0",
@@ -327,7 +327,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleStartTimer}
-            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20 md:h-24"
+            className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20"
             style={{
               backgroundColor: hasBackgroundTimer ? COLORS.secondary : COLORS.textDark,
               boxShadow: `0 4px 0 ${hasBackgroundTimer ? "#D48A20" : "#333"}`,
@@ -339,7 +339,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         )}
 
         {/* gap */}
-        <div className="h-3 md:h-6" />
+        <div className="h-3 md:h-4" />
 
         {/* 방금 완료 취소 버튼 (직전 완료가 있을 때만) */}
         {player.lastUndo && (
@@ -366,7 +366,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleComplete}
-          className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20 md:h-24"
+          className="w-full flex items-center justify-center rounded-2xl font-bold text-xl md:text-2xl text-white h-20"
           style={{
             backgroundColor: playerColor.bg,
             boxShadow: `0 4px 0 ${playerColor.shadow}`,

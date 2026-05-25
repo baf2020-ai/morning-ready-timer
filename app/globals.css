@@ -29,12 +29,12 @@ body {
   overflow: hidden;
 }
 
-/* 안전 영역 헤더 (노치 대응) */
+/* 안전 영역 헤더 (노치 대응) — env()는 브라우저에서 0이므로 최소 패딩 보장 */
 .safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(env(safe-area-inset-top, 0px), 1rem);
 }
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
 }
 
 /* 종이 텍스처 (Capacitor WKWebView 호환) */
