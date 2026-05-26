@@ -1,20 +1,96 @@
 import type { TaskItem, PlayerProfile, CharacterType } from "./types";
 
-export const DEFAULT_CHARACTER_TYPE: CharacterType = "byeol";
+export type CharacterAssetVariant = "icon" | "card" | "cutout";
 
-export const CHARACTER_TYPES = ["byeol", "mori", "pari", "sosol", "dali"] as const satisfies readonly CharacterType[];
+export interface CharacterDefinition {
+  type: CharacterType;
+  label: string;
+  emoji: string;
+  assets: Record<CharacterAssetVariant, string>;
+}
 
-const LEGACY_CHARACTER_TYPE_MAP: Record<string, CharacterType> = {
-  bunny: "byeol",
-  bear: "mori",
-  cat: "pari",
-  penguin: "sosol",
-};
+// 캐릭터 교체 시 이 카탈로그만 갱신한다. 저장된 낡은 키는 현재 기본 캐릭터로 정규화된다.
+export const CHARACTER_CATALOG = [
+  {
+    type: "byeol",
+    label: "토토",
+    emoji: "⭐",
+    assets: {
+      icon: "/images/characters/byeol-icon.png",
+      card: "/images/characters/byeol-card.png",
+      cutout: "/images/characters/cutouts/byeol-cutout.png",
+    },
+  },
+  {
+    type: "mori",
+    label: "도도",
+    emoji: "🌿",
+    assets: {
+      icon: "/images/characters/mori-icon.png",
+      card: "/images/characters/mori-card.png",
+      cutout: "/images/characters/cutouts/mori-cutout.png",
+    },
+  },
+  {
+    type: "pari",
+    label: "초롱이",
+    emoji: "💧",
+    assets: {
+      icon: "/images/characters/pari-icon.png",
+      card: "/images/characters/pari-card.png",
+      cutout: "/images/characters/cutouts/pari-cutout.png",
+    },
+  },
+  {
+    type: "sosol",
+    label: "뾰족이",
+    emoji: "🌰",
+    assets: {
+      icon: "/images/characters/sosol-icon.png",
+      card: "/images/characters/sosol-card.png",
+      cutout: "/images/characters/cutouts/sosol-cutout.png",
+    },
+  },
+  {
+    type: "dali",
+    label: "귀요미",
+    emoji: "🌙",
+    assets: {
+      icon: "/images/characters/dali-icon.png",
+      card: "/images/characters/dali-card.png",
+      cutout: "/images/characters/cutouts/dali-cutout.png",
+    },
+  },
+] as const satisfies readonly CharacterDefinition[];
 
-export function normalizeCharacterType(value: unknown): CharacterType {
-  if (typeof value !== "string") return DEFAULT_CHARACTER_TYPE;
-  if ((CHARACTER_TYPES as readonly string[]).includes(value)) return value as CharacterType;
-  return LEGACY_CHARACTER_TYPE_MAP[value] ?? DEFAULT_CHARACTER_TYPE;
+export const CHARACTER_TYPES = CHARACTER_CATALOG.map((character) => character.type);
+export const DEFAULT_CHARACTER_TYPE: CharacterType = CHARACTER_CATALOG[0].type;
+
+const CHARACTER_TYPE_SET = new Set<string>(CHARACTER_TYPES);
+
+export function isCharacterType(value: unknown): value is CharacterType {
+  return typeof value === "string" && CHARACTER_TYPE_SET.has(value);
+}
+
+export function getDefaultCharacterType(profileIndex = 0): CharacterType {
+  return CHARACTER_CATALOG[profileIndex]?.type ?? DEFAULT_CHARACTER_TYPE;
+}
+
+export function normalizeCharacterType(
+  value: unknown,
+  fallback: CharacterType = DEFAULT_CHARACTER_TYPE,
+): CharacterType {
+  const safeFallback = isCharacterType(fallback) ? fallback : DEFAULT_CHARACTER_TYPE;
+  if (isCharacterType(value)) return value;
+  return safeFallback;
+}
+
+export function getCharacterDefinition(
+  value: unknown,
+  fallback: CharacterType = DEFAULT_CHARACTER_TYPE,
+): CharacterDefinition {
+  const type = normalizeCharacterType(value, fallback);
+  return CHARACTER_CATALOG.find((character) => character.type === type) ?? CHARACTER_CATALOG[0];
 }
 
 export const DEFAULT_TASKS: TaskItem[] = [
@@ -61,17 +137,12 @@ export const STAR_THRESHOLDS = {
 } as const;
 
 // 캐릭터 목록
-export const CHARACTERS: { type: CharacterType; label: string; emoji: string }[] = [
-  { type: "byeol", label: "토토",    emoji: "⭐" },  // 토끼
-  { type: "mori",  label: "도도",    emoji: "🌿" },  // 곰
-  { type: "pari",  label: "초롱이",  emoji: "💧" },  // 개구리
-  { type: "sosol", label: "뾰족이",  emoji: "🌰" },  // 고슴도치
-  { type: "dali",  label: "귀요미",  emoji: "🌙" },  // 여우
-];
+export const CHARACTERS: { type: CharacterType; label: string; emoji: string }[] =
+  CHARACTER_CATALOG.map(({ type, label, emoji }) => ({ type, label, emoji }));
 
 export const DEFAULT_PROFILES: PlayerProfile[] = [
-  { id: "player1", name: "플레이어 1", characterType: "byeol", tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
-  { id: "player2", name: "플레이어 2", characterType: "mori",  tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
+  { id: "player1", name: "플레이어 1", characterType: getDefaultCharacterType(0), tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
+  { id: "player2", name: "플레이어 2", characterType: getDefaultCharacterType(1), tasks: DEFAULT_TASKS, bedtimeTasks: DEFAULT_BEDTIME_TASKS },
 ];
 
 // 새 팔레트: "별숲 마을" 테마

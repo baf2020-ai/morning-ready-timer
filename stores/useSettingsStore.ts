@@ -3,7 +3,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AppSettings, TaskItem, PlayerProfile, RoutineType } from "@/lib/types";
-import { DEFAULT_TASKS, DEFAULT_BEDTIME_TASKS, DEFAULT_PROFILES, normalizeCharacterType } from "@/lib/constants";
+import {
+  DEFAULT_TASKS,
+  DEFAULT_BEDTIME_TASKS,
+  DEFAULT_PROFILES,
+  getDefaultCharacterType,
+  normalizeCharacterType,
+} from "@/lib/constants";
 import { syncSettings, startSync } from "@/lib/sync";
 import { getFamilyCode } from "@/lib/firebase";
 
@@ -86,6 +92,7 @@ export function migrateSettings(input: unknown): AppSettings {
   const profiles = rawProfiles.map((rawProfile, index) => {
     const profile = isRecord(rawProfile) ? (rawProfile as StoredProfile) : {};
     const fallback = DEFAULT_PROFILES[index] ?? DEFAULT_PROFILES[0];
+    const fallbackCharacterType = fallback?.characterType ?? getDefaultCharacterType(index);
     const id = typeof profile.id === "string" && profile.id.trim() ? profile.id : fallback.id;
     const name = typeof profile.name === "string" && profile.name.trim() ? profile.name : fallback.name;
 
@@ -94,7 +101,7 @@ export function migrateSettings(input: unknown): AppSettings {
       ...profile,
       id,
       name,
-      characterType: normalizeCharacterType(profile.characterType),
+      characterType: normalizeCharacterType(profile.characterType, fallbackCharacterType),
       tasks: getTaskList(profile.tasks, tasks),
       bedtimeTasks: getTaskList(profile.bedtimeTasks, bedtimeTasks),
     };
