@@ -314,7 +314,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handlePauseTimer}
-            className="w-full flex items-center justify-center rounded-2xl font-bold text-lg md:text-2xl text-white h-16 md:h-20"
+            className="w-full flex items-center justify-center rounded-2xl font-bold text-base md:text-xl text-white h-14 md:h-16"
             style={{
               backgroundColor: COLORS.primary,
               boxShadow: "0 4px 0 #5041C0",
@@ -327,7 +327,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleStartTimer}
-            className="w-full flex items-center justify-center rounded-2xl font-bold text-lg md:text-2xl text-white h-16 md:h-20"
+            className="w-full flex items-center justify-center rounded-2xl font-bold text-base md:text-xl text-white h-14 md:h-16"
             style={{
               backgroundColor: hasBackgroundTimer ? COLORS.secondary : COLORS.textDark,
               boxShadow: `0 4px 0 ${hasBackgroundTimer ? "#D48A20" : "#333"}`,
@@ -355,13 +355,13 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
         )}
 
         {/* gap */}
-        <div className="h-2 md:h-3" />
+        <div className="h-4 md:h-6" />
 
         {/* 완료 버튼 */}
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleComplete}
-          className="w-full flex items-center justify-center rounded-2xl font-bold text-lg md:text-2xl text-white h-16 md:h-20"
+          className="w-full flex items-center justify-center rounded-2xl font-bold text-base md:text-xl text-white h-14 md:h-16"
           style={{
             backgroundColor: playerColor.bg,
             boxShadow: `0 4px 0 ${playerColor.shadow}`,
