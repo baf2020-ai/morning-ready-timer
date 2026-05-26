@@ -1,5 +1,22 @@
 import type { TaskItem, PlayerProfile, CharacterType } from "./types";
 
+export const DEFAULT_CHARACTER_TYPE: CharacterType = "byeol";
+
+export const CHARACTER_TYPES = ["byeol", "mori", "pari", "sosol", "dali"] as const satisfies readonly CharacterType[];
+
+const LEGACY_CHARACTER_TYPE_MAP: Record<string, CharacterType> = {
+  bunny: "byeol",
+  bear: "mori",
+  cat: "pari",
+  penguin: "sosol",
+};
+
+export function normalizeCharacterType(value: unknown): CharacterType {
+  if (typeof value !== "string") return DEFAULT_CHARACTER_TYPE;
+  if ((CHARACTER_TYPES as readonly string[]).includes(value)) return value as CharacterType;
+  return LEGACY_CHARACTER_TYPE_MAP[value] ?? DEFAULT_CHARACTER_TYPE;
+}
+
 export const DEFAULT_TASKS: TaskItem[] = [
   { id: "blanket",  label: "이불 정리",   icon: "blanket",  durationSeconds: 180,  order: 0 },
   { id: "meal",     label: "아침 먹기",   icon: "meal",     durationSeconds: 1200, order: 1 },

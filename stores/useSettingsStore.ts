@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AppSettings, TaskItem, PlayerProfile, RoutineType } from "@/lib/types";
-import { DEFAULT_TASKS, DEFAULT_BEDTIME_TASKS, DEFAULT_PROFILES } from "@/lib/constants";
+import { DEFAULT_TASKS, DEFAULT_BEDTIME_TASKS, DEFAULT_PROFILES, normalizeCharacterType } from "@/lib/constants";
 import { syncSettings, startSync } from "@/lib/sync";
 import { getFamilyCode } from "@/lib/firebase";
 
@@ -46,20 +46,69 @@ function getProfileTasks(profile: PlayerProfile, routine: RoutineType): TaskItem
   return tasks;
 }
 
+type StoredProfile = Partial<Omit<PlayerProfile, "characterType" | "tasks" | "bedtimeTasks">> & {
+  characterType?: unknown;
+  tasks?: unknown;
+  bedtimeTasks?: unknown;
+};
+
+type StoredSettings = Partial<Omit<AppSettings, "profiles" | "tasks" | "bedtimeTasks">> & {
+  profiles?: unknown;
+  tasks?: unknown;
+  bedtimeTasks?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toStoredSettings(value: unknown): StoredSettings {
+  return isRecord(value) ? (value as StoredSettings) : {};
+}
+
+function getPersistedSettings(value: unknown): unknown {
+  return isRecord(value) ? value.settings : undefined;
+}
+
+function getTaskList(value: unknown, fallback: TaskItem[]): TaskItem[] {
+  return Array.isArray(value) && value.length > 0 ? (value as TaskItem[]) : fallback;
+}
+
 /** 기존 공유 tasks를 프로필별로 마이그레이션 */
-function migrateSettings(settings: AppSettings): AppSettings {
-  const profiles = settings.profiles.map((p) => {
-    const needsMigration = !p.tasks || p.tasks.length === 0;
-    if (needsMigration) {
-      return {
-        ...p,
-        tasks: settings.tasks?.length ? settings.tasks : DEFAULT_TASKS,
-        bedtimeTasks: settings.bedtimeTasks?.length ? settings.bedtimeTasks : DEFAULT_BEDTIME_TASKS,
-      };
-    }
-    return p;
+export function migrateSettings(input: unknown): AppSettings {
+  const settings = toStoredSettings(input);
+  const tasks = getTaskList(settings.tasks, DEFAULT_TASKS);
+  const bedtimeTasks = getTaskList(settings.bedtimeTasks, DEFAULT_BEDTIME_TASKS);
+  const rawProfiles = Array.isArray(settings.profiles) && settings.profiles.length > 0
+    ? settings.profiles
+    : DEFAULT_PROFILES;
+
+  const profiles = rawProfiles.map((rawProfile, index) => {
+    const profile = isRecord(rawProfile) ? (rawProfile as StoredProfile) : {};
+    const fallback = DEFAULT_PROFILES[index] ?? DEFAULT_PROFILES[0];
+    const id = typeof profile.id === "string" && profile.id.trim() ? profile.id : fallback.id;
+    const name = typeof profile.name === "string" && profile.name.trim() ? profile.name : fallback.name;
+
+    return {
+      ...fallback,
+      ...profile,
+      id,
+      name,
+      characterType: normalizeCharacterType(profile.characterType),
+      tasks: getTaskList(profile.tasks, tasks),
+      bedtimeTasks: getTaskList(profile.bedtimeTasks, bedtimeTasks),
+    };
   });
-  return { ...settings, profiles };
+
+  return {
+    ...defaultSettings,
+    ...settings,
+    tasks,
+    bedtimeTasks,
+    profiles,
+    targetTime: typeof settings.targetTime === "string" ? settings.targetTime : null,
+    pinCode: typeof settings.pinCode === "string" ? settings.pinCode : null,
+  };
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -165,14 +214,16 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: "mrt-settings",
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        settings: migrateSettings(getPersistedSettings(persistedState) ?? currentState.settings),
+      }),
       onRehydrateStorage: () => {
         return (state, error) => {
           if (!error && state) {
             // 마이그레이션: 기존 공유 tasks → 프로필별
             const migrated = migrateSettings(state.settings);
-            if (migrated !== state.settings) {
-              useSettingsStore.setState({ settings: migrated });
-            }
+            useSettingsStore.setState({ settings: migrated });
             // 로컬 변경 → Firebase 푸시
             useSettingsStore.subscribe((s) => {
               syncSettings(s.settings);

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import type { CSSProperties } from "react";
 import type { CharacterType } from "@/lib/types";
+import { normalizeCharacterType } from "@/lib/constants";
 
 type Expression = "sleeping" | "happy" | "excited" | "cool" | "worried";
 type CharacterVariant = "icon" | "card" | "cutout";
@@ -57,7 +58,7 @@ export default function Character({
   className,
   variant = "icon",
 }: CharacterProps) {
-  const asset = CHARACTER_ASSETS[type];
+  const asset = CHARACTER_ASSETS[normalizeCharacterType(type)];
   const isCard = variant === "card";
   const src = variant === "card" ? asset.card : variant === "cutout" ? asset.cutout : asset.icon;
   const style: CSSProperties = isCard
