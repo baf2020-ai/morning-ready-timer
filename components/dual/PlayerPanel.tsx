@@ -308,7 +308,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
       </div>
 
       {/* 3. 하단 고정 — 엄지 터치존 */}
-      <div className="shrink-0 px-4 md:px-8 pb-3 md:pb-4 pt-1.5 md:pt-2 safe-bottom w-full max-w-3xl mx-auto" style={{ backgroundColor: "white" }}>
+      <div className="shrink-0 px-4 md:px-8 pb-3 md:pb-4 pt-1.5 md:pt-2 safe-bottom w-full max-w-3xl mx-auto">
         {/* 시작/정지 버튼 */}
         {isDisplayedTaskRunning ? (
           <motion.button
