@@ -270,7 +270,7 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           <CountdownTimer
             totalSeconds={duration}
             remainingSeconds={remaining}
-            size={compact ? (isTablet ? 300 : 190) : isTablet ? 380 : 260}
+            size={compact ? (isTablet ? 300 : 190) : isTablet ? 380 : 200}
             isPaused={!isDisplayedTaskRunning}
             onTimeClick={handleTimeClick}
           />
@@ -338,29 +338,24 @@ export default function PlayerPanel({ playerIndex, compact }: PlayerPanelProps) 
           </motion.button>
         )}
 
-        {/* gap */}
-        <div className="h-3 md:h-4" />
-
-        {/* 방금 완료 취소 버튼 (직전 완료가 있을 때만) */}
+        {/* 방금 완료 취소 — 인라인 텍스트 링크로 공간 절약 */}
         {player.lastUndo && (
-          <>
-            <motion.button
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleUndo}
-              className="w-full flex items-center justify-center rounded-2xl font-bold text-base md:text-lg h-14 md:h-16"
-              style={{
-                backgroundColor: "#F0EBFF",
-                color: COLORS.primary,
-                fontFamily: "Jua, sans-serif",
-              }}
-            >
-              ↩ &quot;{player.lastUndo.taskLabel}&quot; 완료 취소
-            </motion.button>
-            <div className="h-2.5 md:h-3" />
-          </>
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={handleUndo}
+            className="w-full text-center text-sm md:text-base py-1.5 md:py-2 underline underline-offset-2"
+            style={{
+              color: COLORS.primary,
+              fontFamily: "Jua, sans-serif",
+            }}
+          >
+            ↩ &quot;{player.lastUndo.taskLabel}&quot; 완료 취소
+          </motion.button>
         )}
+
+        {/* gap */}
+        <div className="h-2 md:h-3" />
 
         {/* 완료 버튼 */}
         <motion.button
