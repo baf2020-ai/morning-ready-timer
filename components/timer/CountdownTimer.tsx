@@ -212,22 +212,6 @@ export default function CountdownTimer({ totalSeconds, remainingSeconds, size = 
           >
             {isOvertime ? "시간 초과!" : `${Number(mm)}분 ${Number(ss)}초`}
           </text>
-
-          {/* 대기 상태: 탭하여 시작 안내 */}
-          {isPaused && !isOvertime && (
-            <text
-              x={cx}
-              y={cy + 26}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="8"
-              fontFamily="Jua, sans-serif"
-              fill={COLORS.primary}
-              opacity={0.7}
-            >
-              ▶ 탭하여 시작
-            </text>
-          )}
         </g>
 
       </svg>
