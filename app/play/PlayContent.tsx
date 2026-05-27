@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGameStore } from "@/stores/useGameStore";
 import { useStatsStore } from "@/stores/useStatsStore";
@@ -8,6 +8,7 @@ import PlayerPanel from "@/components/dual/PlayerPanel";
 import DualLayout from "@/components/dual/DualLayout";
 import { COLORS, ROUTINE_THEME } from "@/lib/constants";
 import { didPlayerMissDeadline, didSessionMissDeadline, getTasksForPlayer } from "@/lib/sessionOutcome";
+import { isToss } from "@/lib/runtime";
 
 const COMPLETE_NAVIGATION_DELAY_MS = 2200;
 
@@ -25,6 +26,11 @@ export default function PlayContent() {
   const addRecord = useStatsStore((s) => s.addRecord);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const navigatedRef = useRef(false);
+  const [inToss, setInToss] = useState(false);
+
+  useEffect(() => {
+    setInToss(isToss());
+  }, []);
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -104,9 +110,13 @@ export default function PlayContent() {
         >
           ← 홈
         </button>
-        <h1 className="text-lg md:text-2xl font-bold" style={{ color: COLORS.primary, fontFamily: "Jua, sans-serif" }}>
-          {ROUTINE_THEME[session.routineType ?? "morning"].headerTitle}
-        </h1>
+        {inToss ? (
+          <span aria-hidden className="flex-1" />
+        ) : (
+          <h1 className="text-lg md:text-2xl font-bold" style={{ color: COLORS.primary, fontFamily: "Jua, sans-serif" }}>
+            {ROUTINE_THEME[session.routineType ?? "morning"].headerTitle}
+          </h1>
+        )}
         <div className="flex gap-3">
           <button
             onClick={toggleMute}
