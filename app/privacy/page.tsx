@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { COLORS } from "@/lib/constants";
+import { LEGAL } from "@/lib/legal";
 
-const LAST_UPDATED = "2026-05-26";
-const PROVIDER_NAME = "TODO: 사업자/개인 개발자 이름";
-const PROVIDER_CONTACT = "TODO: 연락 가능한 이메일";
+const { lastUpdated: LAST_UPDATED, providerName: PROVIDER_NAME, providerContact: PROVIDER_CONTACT } = LEGAL;
 
 export default function PrivacyPage() {
   const router = useRouter();

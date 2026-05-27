@@ -734,6 +734,13 @@ export default function SettingsPage() {
           >
             개인정보 처리방침
           </button>
+          <button
+            onClick={() => router.push("/terms")}
+            className="text-xs underline block mx-auto"
+            style={{ color: COLORS.textSub }}
+          >
+            이용약관
+          </button>
         </section>
       </div>
     </div>

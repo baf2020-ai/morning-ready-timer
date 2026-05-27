@@ -12,7 +12,9 @@
 - [x] AndroidManifest — `android:screenOrientation="portrait"`
 - [x] ServiceWorker — Capacitor 네이티브에서는 등록 건너뜀 (`components/ServiceWorkerRegister.tsx`)
 - [x] `/privacy` 라우트 — 앱 동작에 맞춘 한국어 처리방침 초안
-- [x] 설정 화면에 개인정보 처리방침 링크 추가
+- [x] `/terms` 라우트 — 무료·무광고·무계정 기준 이용약관 초안
+- [x] 설정 화면에 처리방침 및 이용약관 링크 추가
+- [x] 운영자 정보(`lib/legal.ts`)를 처리방침/약관에서 공통 참조 — 한 곳만 수정하면 양쪽 반영
 - [x] 사용하지 않는 Next 기본 SVG(public/{next,vercel,window,globe,file}.svg) 제거
 - [x] `npm run build:release` 스크립트 — `next build` 후 dev 프리뷰 라우트(out/apple-preview·__apple-preview·icon-preview) 제거
 - [x] `cap:sync`/`cap:ios`/`cap:android` 스크립트가 release 빌드를 사용하도록 변경
@@ -23,8 +25,8 @@
 
 ### A. 사업자/연락처 정보 채우기
 
-- [ ] `app/privacy/page.tsx`의 `PROVIDER_NAME`, `PROVIDER_CONTACT` 상수를 실제 운영자명·이메일로 교체
-- [ ] 처리방침을 공개 URL(예: GitHub Pages, 회사 사이트)에도 게시 — App Store/Play Console에 URL 등록 필요
+- [ ] `lib/legal.ts`의 `providerName`, `providerContact`를 실제 운영자명·이메일로 교체 (처리방침·약관에서 공통 참조)
+- [x] 처리방침/약관은 별도 외부 URL 게시 없이 `https://ready-timer.pages.dev/privacy`, `/terms`만 사용 — 스토어/토스 콘솔에 이 URL을 등록
 
 ### B. 버전/빌드 번호
 
@@ -88,6 +90,20 @@ Play Console:
 - [ ] 백그라운드 → 포그라운드 복귀 시 타이머 상태 정상
 - [ ] 비행기 모드에서 동기화 미설정 사용자 기준 동작 정상 (오프라인 우선)
 - [ ] iPad 가로/세로 회전 시 레이아웃 정상 (iPhone은 세로 고정)
+
+---
+
+## I. 토스 인앱 (WebView 링크) 준비
+
+기술 통합은 외부 WebView 링크 방식 — 코드 변경 최소, 파트너 심사 자료 준비가 메인.
+
+- [x] `lib/runtime.ts` — `isCapacitor` / `isToss` / `isInAppWebView` / `isWeb` 헬퍼
+- [x] `ServiceWorkerRegister` 토스 환경에서도 등록 스킵
+- [x] `PlayContent` 헤더 — 토스 환경에서 루틴 타이틀 텍스트 숨김 (토스 자체 헤더와 중복 회피)
+- [ ] 실제 토스 인앱에서 띄워본 뒤 `navigator.userAgent` 캡처 → `lib/runtime.ts`의 `isToss()` UA 패턴 보정
+- [ ] 토스 WebView에서 외부로 빠지는 링크가 없는지 점검 (현재 처리방침/약관 외부 링크 없음 — OK)
+- [ ] 파트너 심사 자료: 사업자등록증, `/privacy`·`/terms` URL, 서비스 소개 1~2장, 스크린샷 3~5장, CS 이메일
+- [ ] 토스 파트너 채널로 신청 (공식 BD 컨택)
 
 ---
 
